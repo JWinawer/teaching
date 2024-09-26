@@ -38,17 +38,8 @@ for ii = 1:P.nsteps
     subplot(122)
     plotBulk(t, M)
 
-    % subplot(133)
-    % plotElevationHistogram(Spins);
-
-    drawnow(); % pause(params.dt)
+    drawnow(); 
 end
-
-% figure(1), clf; Z = M(:,3);
-% f=fit(t', Z, 'A-exp(-(x-C)/B)');
-% plot(f, t, Z)
-% axis auto
-% disp(f.B)
 
 end
 
@@ -215,18 +206,13 @@ Mxy = vecnorm(M(idx, 1:2), 2, 2);
 plot(t(idx), Mz, 'g.-', t(idx), Mxy,  'r.-');
 
 hold on; 
-axis([0 max(t) 0 1.1]); 
-axis square
-xlabel('Time (s)')
-ylabel('Magnetization')
-% legend({'Mz', 'Mxy'})
+if size(M,1) == 1
+    axis([0 max(t) -1 1.1]); 
+    axis square
+    xlabel('Time (s)')
+    ylabel('Magnetization')
 
+    legend({'Mz', 'Mxy'},'AutoUpdate','off', 'Location','southwest');
 end
 
-function plotElevationHistogram(Spins)
-[~, elevation] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
-histogram(rad2deg(elevation), 'Normalization','percentage');
-axis([-90 90 0 10]); axis square; set(gca, 'YTick', []);
-xlabel('Elevation (deg)')
-ylabel('Probability')
 end
