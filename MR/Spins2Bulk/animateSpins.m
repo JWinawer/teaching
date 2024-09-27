@@ -31,12 +31,22 @@ for ii = 1:P.nsteps
     M(ii,:) = sum(Spins)/norm(M0);    
 
     % Plot instantaeous spins
-    subplot(121)
+    subplot(221)
     plotSpins(Spins, M0);     
 
     % Plot Bulk magnetization 
-    subplot(122)
+    subplot(222)
     plotBulk(t, M)
+
+    % Plot Spin Angle Histograms
+    subplot(223)
+    [azimuth, elevation] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
+    histogram(elevation, linspace(-pi/2, pi/2, 100)); title('Elevation')    
+    set(gca, 'YLim', [0 P.nspins/100*10], 'XLim', [-pi/2, pi/2]); axis square
+
+    subplot(224)    
+    histogram(azimuth, linspace(-pi, pi, 100)); title('Azimuth')    
+    set(gca, 'YLim', [0 P.nspins/100*10], 'XLim', [-pi, pi]); axis square
 
     drawnow(); 
 end
