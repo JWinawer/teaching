@@ -26,13 +26,7 @@ units.t1  = 's';
 params.larmor = 10;
 units.larmor  = 'cycles/s';
 
-% B1 carrier frequency in cycles/s. This should match the Larmor frequency.
-%   We allow it to differ in case we want to see how B1 fields become
-%   ineffective when off resonance.
-params.B1carrier = params.larmor;   
-units.B1carrier  = 'cycles/s';
-
-% B1 rotation frequency, cycles/pe. This determines fast the RF flips are. 
+% Nutation frequency, cycles/s. This determines fast the RF flips are. 
 %   0.25 / .010 means a 90 deg flip (quarter cycle) in 10 ms
 params.B1freq = 0.25 /.010;  
 units.B1freq  = 'cycles/s';

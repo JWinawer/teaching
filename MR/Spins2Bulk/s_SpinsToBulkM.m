@@ -1,33 +1,38 @@
 % Set up the figure
 fH = figure;
 
-%% Thermal equilibrium
-
+%% Noiseless Larmor precession
 [params, units] = spinsDefaultParams();
 params.fliptime  = inf;  %   (no flip)      
+params.t1 = inf;
+params.t2 = inf;
 
 clf;
-set(gcf, 'Name', 'Thermal equilibrium', 'NumberTitle', 'off');
+set(gcf, 'Name', 'Noiseless precession', 'NumberTitle', 'off');
 animateSpins(params);
 
-%% 90º flip, t2 relaxation, laboratory reference 
-% (set t1 to very long)
+%% Noiseless Larmor precession with 90º flip
 params = spinsDefaultParams();
+params.t1 = inf;
+params.t2 = inf;
 
-params.dt        = 0.002; % seconds
-params.t1        = 20;    % seconds 
+clf;
+set(gcf, 'Name', 'Noiseless precession with flip', 'NumberTitle', 'off');
+animateSpins(params);
+
+%% T2 relaxation, laboratory reference 
+params = spinsDefaultParams();
+params.t1 = inf;    % seconds 
 
 clf; 
 set(gcf, 'Name', 'T2 relaxation, laboratory reference frame', 'NumberTitle', 'off');
 animateSpins(params);
 
-%% same, but in rotating reference frame
+%% T2 relaxation, rotating reference frame
 params = spinsDefaultParams();
 
-params.dt        = 0.002; % seconds
-params.t1        = 20;    % seconds 
+params.t1        = inf;    % seconds 
 params.larmor    = 0;
-params.B1carrier = params.larmor;
 
 clf;
 set(gcf, 'Name', 'T2 relaxation, rotating reference frame', 'NumberTitle', 'off');
@@ -35,32 +40,29 @@ set(gcf, 'Name', 'T2 relaxation, rotating reference frame', 'NumberTitle', 'off'
 animateSpins(params);
 
 
-%% watch a slow 90º flip in rotating reference frame
+%% Slow 90º flip in rotating reference frame
 params = spinsDefaultParams();
 
 params.dt        = 0.0001;   % seconds
 params.nsteps    = 150; % count
-params.flipangle = pi/2;   % flip angle in radians
 params.fliptime  = 0.001;  % when to initiate flip (seconds)
 params.larmor    = 0;
-params.B1carrier = params.larmor;
 
 clf
 set(gcf, 'Name', 'Slow 90º flip', 'NumberTitle', 'off');
 
 animateSpins(params);
 
-%% continuous flipping. increase t2 and t1 
+%% Continuous flipping. 
+
 params = spinsDefaultParams();
 
-params.dt        = 0.002;   
-params.nsteps    = 200; 
-params.flipangle = pi*2*50;   % flip angle in radians
-params.fliptime  = 0.003;  % when to initiate flip (seconds)
-params.t2        = .2;
-params.t1        = 20;
+params.dt        = 0.0001;   % seconds
+params.nsteps    = 150; % count
+params.fliptime  = 0.001;  % when to initiate flip (seconds)
 params.larmor    = 0;
-params.B1carrier = params.larmor;
+params.flipangle = 50*pi;
+params.B1freq    = 250;
 
 clf;
 set(gcf, 'Name', 'Continuous flipping', 'NumberTitle', 'off');

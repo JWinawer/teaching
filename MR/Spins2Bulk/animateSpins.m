@@ -5,7 +5,7 @@ t              = (1:P.nsteps) * P.dt; % seconds
 P.larmorStep   = P.larmor * P.dt * 2 * pi; % radians
 P.t2stepsize   = sqrt(1.9/P.t2*P.dt); % sd of radians per step for random walk causing t2 decay
 flipduration   = P.flipangle / (2*pi) / P.B1freq;
-P.RFpulse      = t > P.fliptime & t < P.fliptime + flipduration;
+P.RFpulse      = t >= P.fliptime & t < P.fliptime + flipduration;
 
 % Initialize spins at thermal equilibrium
 [Spins, B_dist, M0] = initializeSpins(P);
@@ -144,7 +144,7 @@ stepnum = params.stepnum;
 if params.RFpulse(stepnum)
 
 
-    theta = stepnum * params.B1carrier * 2*pi * params.dt ;        
+    theta = stepnum * params.larmor * 2*pi * params.dt ;        
     
     % We can compute the effect of B1 either by assuming a rotation of the
     %  spin axis or by computing the cross product of the spin axes with
@@ -174,6 +174,7 @@ function plotSpins(Spins, M0)
 scatter3(Spins(:,1), Spins(:,2), Spins(:,3), 10,  ...
     '.', 'MarkerFaceColor', .8*[1 1 1], 'MarkerFaceAlpha', .3, ...
     'MarkerEdgeColor',.8*[1 1 1], 'MarkerEdgeAlpha', .3);
+
 axis([-1 1 -1 1 -1 1]); axis square
 
 hold on; 
