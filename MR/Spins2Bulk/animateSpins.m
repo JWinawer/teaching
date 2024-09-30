@@ -1,4 +1,9 @@
-function animateSpins(P)
+function animateSpins(P, fH, titlestring)
+
+if ~exist("fH", 'var'), fH = figure(); end
+if ~exist('titlestring', 'var'), titlestring = []; end
+clf(fH); tH = tiledlayout(2,2);
+title(tH, titlestring);
 
 % derived parameters
 t              = (1:P.nsteps) * P.dt; % seconds
@@ -31,23 +36,21 @@ for ii = 1:P.nsteps
     M(ii,:) = sum(Spins)/norm(M0);    
 
     % Plot instantaeous spins
-    subplot(221)
-    plotSpins(Spins, M0);     
+    nexttile(1);
+    plotSpins(Spins, M0);
 
     % Plot Bulk magnetization 
-    subplot(222)
+    nexttile(2);
     plotBulk(t, M)
 
     % Plot Spin Angle Histograms
-    subplot(223)
+    nexttile(3);
     [azimuth, elevation] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
-    histogram(elevation, linspace(-pi/2, pi/2, 100)); title('Elevation')    
-    set(gca, 'YLim', [0 P.nspins/100*10], 'XLim', [-pi/2, pi/2]); axis square
+    plotHistogram(rad2deg(azimuth), [-180 180], 'Azimuth', 'red');
 
-    subplot(224)    
-    histogram(azimuth, linspace(-pi, pi, 100)); title('Azimuth')    
-    set(gca, 'YLim', [0 P.nspins/100*10], 'XLim', [-pi, pi]); axis square
-
+    nexttile(4);
+    plotHistogram(rad2deg(elevation), [-90 90], 'Elevation', 'green');
+    
     drawnow(); 
 end
 
@@ -225,5 +228,13 @@ if size(M,1) == 1
 
     legend({'Mz', 'Mxy'},'AutoUpdate','off', 'Location','southwest');
 end
+
+end
+
+function plotHistogram(angleData, angleRange, titlestr, color)
+    nSpins = length(angleData);
+    histogram(angleData, linspace(angleRange(1), angleRange(2), 100), 'FaceColor', color); 
+    title(titlestr)    
+    set(gca, 'YLim', [0 nSpins/100*10], 'XLim', angleRange); axis square
 
 end
