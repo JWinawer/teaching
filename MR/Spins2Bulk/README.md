@@ -10,3 +10,9 @@ fH = figure();
 [params, units] = spinsDefaultParams();
 animateSpins(params, fH);
 ```
+
+For additional examples, see
+
+```matlab
+s_SpinsToBulkM.m
+```
