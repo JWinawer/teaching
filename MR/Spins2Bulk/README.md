@@ -17,5 +17,5 @@ For additional examples, see
 s_SpinsToBulkM.m
 ```
 
-Here are some movies made by the code:
-https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj
+Here are some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj) made by the code.
+
