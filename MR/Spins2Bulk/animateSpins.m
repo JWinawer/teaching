@@ -1,8 +1,13 @@
-function animateSpins(P, fH, titlestring)
+function MOV = animateSpins(P, fH, titlestring)
 
 if ~exist("fH", 'var'), fH = figure(); end
 if ~exist('titlestring', 'var'), titlestring = []; end
-clf(fH); tH = tiledlayout(2,2);
+
+% Set up figure
+clf(fH); tH = tiledlayout(3,4);
+pos = get(fH, 'Position');
+pos(3:4) = [800 600];
+set(gcf, 'Position', pos);
 title(tH, titlestring);
 
 % derived parameters
@@ -14,6 +19,10 @@ P.RFpulse      = t >= P.fliptime & t < P.fliptime + flipduration;
 
 % Initialize spins at thermal equilibrium
 [Spins, B_dist, M0] = initializeSpins(P);
+
+if nargout > 0
+    MOV(P.nsteps) = struct('cdata',[],'colormap',[]);
+end
 
 % Dynamics
 for ii = 1:P.nsteps
@@ -36,22 +45,24 @@ for ii = 1:P.nsteps
     M(ii,:) = sum(Spins)/norm(M0);    
 
     % Plot instantaeous spins
-    nexttile(1);
+    nexttile(1, [3 3]);
     plotSpins(Spins, M0);
 
     % Plot Bulk magnetization 
-    nexttile(2);
+    nexttile(4);
     plotBulk(t, M)
 
     % Plot Spin Angle Histograms
-    nexttile(3);
+    nexttile(8);
     [azimuth, elevation] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
     plotHistogram(rad2deg(azimuth), [-180 180], 'Azimuth', 'red');
 
-    nexttile(4);
+    nexttile(12);
     plotHistogram(rad2deg(elevation), [-90 90], 'Elevation', 'green');
     
-    drawnow(); 
+    drawnow();
+    
+    if nargout == 1, MOV(ii) = getframe(fH); end
 end
 
 end
@@ -233,7 +244,7 @@ end
 
 function plotHistogram(angleData, angleRange, titlestr, color)
     nSpins = length(angleData);
-    histogram(angleData, linspace(angleRange(1), angleRange(2), 100), 'FaceColor', color); 
+    histogram(angleData, linspace(angleRange(1), angleRange(2), 100), 'FaceColor', color, 'EdgeColor','none'); 
     title(titlestr)    
     set(gca, 'YLim', [0 nSpins/100*10], 'XLim', angleRange); axis square
 

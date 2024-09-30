@@ -7,26 +7,36 @@ params.fliptime  = inf;  %   (no flip)
 params.t1 = inf;
 params.t2 = inf;
 
-animateSpins(params, fH, 'Noiseless precession');
+titlestr = 'Noiseless precession';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+
 
 %% Noiseless Larmor precession with 90º flip
 params = spinsDefaultParams();
 params.t1 = inf;
 params.t2 = inf;
 
-animateSpins(params, fH, 'Noiseless precession with flip');
+titlestr = 'Noiseless precession with flip';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+
 
 %% T2 relaxation, laboratory reference
 params = spinsDefaultParams();
 
-animateSpins(params,fH, 'T2 relaxation, laboratory reference frame');
+titlestr = 'T2 relaxation in laboratory reference frame';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
 %% T2 relaxation, rotating reference frame 
 params = spinsDefaultParams();
 params.larmor = 0;
 params.dt = 0.002;
 
-animateSpins(params, fH, 'T2 relaxation, rotating reference frame');
+titlestr = 'T2 relaxation in rotating reference frame';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
 %% T1 and T2 relaxation, rotating reference frame
 params = spinsDefaultParams();
@@ -34,8 +44,10 @@ params.larmor    = 0;
 params.dt        = 0.01;% longer dt because we need a longer demo for T1 reovery   
 params.nsteps    = 150;     
 params.flipangle = pi/2;
-
-animateSpins(params, fH, 'T1 and T2 relaxation, rotating reference frame');
+params.fliptime  = 0.100;
+titlestr = 'T1 and T2 relaxation in rotating reference frame';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
 %% Slow 90º flip in rotating reference frame
 params = spinsDefaultParams();
@@ -45,7 +57,9 @@ params.nsteps    = 150; % count
 params.fliptime  = 0.001;  % when to initiate flip (seconds)
 params.larmor    = 0;
 
-animateSpins(params, fH, 'Slow 90º flip');
+titlestr = 'Slow 90º flip';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
 %% Continuous flipping. 
 
@@ -58,5 +72,19 @@ params.larmor    = 0;
 params.flipangle = 50*pi;
 params.B1freq    = 250;
 
-animateSpins(params, fH, 'Continuous flipping');
+titlestr = 'Continuous flipping';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
+
+%% save function
+
+function writeMovie(MOVIE, fname)
+
+v = VideoWriter(fname, "MPEG-4");
+v.FrameRate = 12;
+open(v);
+writeVideo(v, MOVIE);
+close(v);
+
+end
