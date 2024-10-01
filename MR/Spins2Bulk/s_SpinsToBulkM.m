@@ -49,6 +49,18 @@ titlestr = 'T1 and T2 relaxation in rotating reference frame';
 SPIN_MOVIE = animateSpins(params, fH, titlestr);
 writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
 
+%% T1 and T2 relaxation, matched time scales
+params = spinsDefaultParams();
+params.larmor    = 0;
+params.t2        = params.t1;
+params.dt        = 0.01;% longer dt because we need a longer demo for T1 reovery   
+params.nsteps    = 150;     
+params.flipangle = pi/2;
+params.fliptime  = 0.100;
+titlestr = 'T1 and T2 relaxation with matched time constants';
+SPIN_MOVIE = animateSpins(params, fH, titlestr);
+writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+
 %% Slow 90º flip in rotating reference frame
 params = spinsDefaultParams();
 
