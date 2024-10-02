@@ -1,9 +1,9 @@
 function MOV = animateSpins(parameters, figureHandle, titleString)
 
-if ~exist('params', 'var'), parameters = spinsDefaultParams(); end
-if ~exist('fH', 'var'), figureHandle = figure(); end
-if ~exist('titlestring', 'var'), titleString = []; end
-if nargout > 0, MOV(parameters.nsteps) = struct('cdata',[],'colormap',[]); end
+if ~exist('parameters', 'var'),   parameters   = spinsDefaultParams(); end
+if ~exist('figureHandle', 'var'), figureHandle = figure(); end
+if ~exist('titleString', 'var'),  titleString  = []; end
+if nargout>0, MOV(parameters.nsteps) = struct('cdata',[],'colormap',[]); end
 
 % Derived parameters
 parameters = spinsAddDerivedParameters(parameters);
