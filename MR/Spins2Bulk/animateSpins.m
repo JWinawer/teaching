@@ -1,33 +1,33 @@
-function MOV = animateSpins(params, fH, titlestr)
+function MOV = animateSpins(parameters, figureHandle, titleString)
 
-if ~exist('P', 'var'), params = spinsDefaultParams(); end
-if ~exist('fH', 'var'), fH = figure(); end
-if ~exist('titlestring', 'var'), titlestr = []; end
-if nargout > 0, MOV(params.nsteps) = struct('cdata',[],'colormap',[]); end
+if ~exist('params', 'var'), parameters = spinsDefaultParams(); end
+if ~exist('fH', 'var'), figureHandle = figure(); end
+if ~exist('titlestring', 'var'), titleString = []; end
+if nargout > 0, MOV(parameters.nsteps) = struct('cdata',[],'colormap',[]); end
 
 % Derived parameters
-params = spinsAddDerivedParameters(params);
+parameters = spinsAddDerivedParameters(parameters);
 
 % Set up figure
-fH = spinsSetUpFigure(fH, titlestr);
+figureHandle = spinsSetUpFigure(figureHandle, titleString);
 
 % Initialize spins at thermal equilibrium
-[Spins, B_dist, M0] = initializeSpins(params);
+[Spins, B_dist, M0] = initializeSpins(parameters);
 
 % Dynamics
-for stepnum = 1:params.nsteps
+for stepnum = 1:parameters.nsteps
     
     % Larmor precession
-    Spins = rotateB0(Spins, params);
+    Spins = rotateB0(Spins, parameters);
 
     % B1 flip
-    Spins = rotateB1(Spins, params, stepnum);
+    Spins = rotateB1(Spins, parameters, stepnum);
 
     % T2 relaxation
-    Spins = relaxationTransverse(Spins, params);
+    Spins = relaxationTransverse(Spins, parameters);
 
     % T1 relaxation
-    Spins = relaxationLongitudinal(Spins, params, B_dist);
+    Spins = relaxationLongitudinal(Spins, parameters, B_dist);
 
     % Bulk magnetization
     M(stepnum,:) = sum(Spins)/norm(M0);    
@@ -38,7 +38,7 @@ for stepnum = 1:params.nsteps
 
     % Plot Bulk magnetization 
     nexttile(4);
-    plotBulk(params.t, M)
+    plotBulk(parameters.t, M)
 
     % Plot Spin Angle Histograms
     nexttile(8);    
@@ -49,7 +49,7 @@ for stepnum = 1:params.nsteps
     
     pause(0.005);
     
-    if nargout == 1, MOV(stepnum) = getframe(fH); end
+    if nargout == 1, MOV(stepnum) = getframe(figureHandle); end
 end
 
 end
