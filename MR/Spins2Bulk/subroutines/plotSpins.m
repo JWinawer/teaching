@@ -13,10 +13,12 @@ plotAxes();
 
 % Bulk magnetization
 M = sum(Spins)/norm(M0);
-quiver3(0, 0, 0, M(1), M(2), M(3), 'k-', 'AutoScale', 'off', 'LineWidth', 4); 
-quiver3(0, 0, 0, M(1), M(2), 0, 'r-', 'AutoScale', 'off', 'LineWidth', 4); 
-quiver3(0, 0, 0, 0, 0, M(3), 'g-', 'AutoScale', 'off', 'LineWidth', 4); 
-    
+
+plot3([0  M(1)], [0 M(2)], [0 M(3)], 'k-', ... total M0
+   [0, M(1)], [0, M(2)], [0, 0],'r-', ... transverse component
+   [0,0], [0, 0], [0, M(3)], 'g-', ... longitudinal component
+   'LineWidth', 4); 
+
 % Keep current axis properties but replace plotted data for next time step
 set(gca, 'NextPlot', 'replacechildren');
 
