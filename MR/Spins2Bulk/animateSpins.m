@@ -47,7 +47,7 @@ for stepnum = 1:parameters.nsteps
     nexttile(12);
     plotHistogram(Spins, 'Elevation');
     
-    pause(0.005);
+    pause(0.001);
     
     if nargout == 1, MOV(stepnum) = getframe(figureHandle); end
 end
