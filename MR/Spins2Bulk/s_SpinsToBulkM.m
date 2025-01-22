@@ -45,10 +45,10 @@ animateSpins(params, fH, titlestr);
 fH = figure;
 params = spinsDefaultParams();
 params.larmor    = 0;
-params.dt        = 0.01;% longer dt because we need a longer demo for T1 reovery   
-params.nsteps    = 150;     
+params.dt        = 0.001;% longer dt because we need a longer demo for T1 reovery   
+params.nsteps    = 1500;     
 params.flipangle = pi/2;
-params.fliptime  = 0.100;
+params.fliptime  = 0.0100;
 titlestr = 'T1 and T2 relaxation in rotating reference frame';
 animateSpins(params, fH, titlestr);
 
