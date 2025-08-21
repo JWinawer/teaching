@@ -19,3 +19,4 @@ s_SpinsToBulkM.m
 
 Here are some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj) made by the code.
 
+Updated Aug 21, 2025
