@@ -1,9 +1,11 @@
-function MOV = animateSpins(parameters, figureHandle, titleString)
+function animateSpins(parameters, figureHandle, titleString, saveMovieFlag)
 
 if ~exist('parameters', 'var'),   parameters   = spinsDefaultParams(); end
 if ~exist('figureHandle', 'var'), figureHandle = figure(); end
 if ~exist('titleString', 'var'),  titleString  = []; end
-if nargout>0, MOV(parameters.nsteps) = struct('cdata',[],'colormap',[]); end
+if exist('saveMovieFlag', 'var') && saveMovieFlag
+    MOV(parameters.nsteps) = struct('cdata',[],'colormap',[]); 
+end
 
 % Derived parameters
 parameters = spinsAddDerivedParameters(parameters);
@@ -49,9 +51,17 @@ for stepnum = 1:parameters.nsteps
     
     pause(0.001);
     
-    if nargout == 1, MOV(stepnum) = getframe(figureHandle); end
+    if saveMovieFlag, MOV(stepnum) = getframe(figureHandle); end
 end
 
+if saveMovieFlag
+    fname = fullfile("movies", titlestr);
+    v = VideoWriter(fname, "MPEG-4");
+    v.FrameRate = 6;
+    open(v);
+    writeVideo(v, MOVIE);
+    close(v);
+end
 end
 
 

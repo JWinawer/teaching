@@ -1,5 +1,6 @@
 
 addpath('subroutines/');
+saveMovieFlag = false;
 
 %% Noiseless Larmor precession
 fH = figure;
@@ -9,15 +10,8 @@ params.t1 = inf;
 params.t2 = inf;
 
 titlestr = 'Noiseless precession';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
-
+animateSpins(params, fH, titlestr, saveMovieFlag);
  
-%{
-% % To save a move file:
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-
-%}
 
 %% Noiseless Larmor precession with 90º flip
 fH = figure;
@@ -27,17 +21,14 @@ params.t2 = inf;
 
 titlestr = ['Noiseless precession wi' ...
     'th flip'];
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
-
+animateSpins(params, fH, titlestr, saveMovieFlag);
 
 %% T2 relaxation, laboratory reference
 fH = figure;
 params = spinsDefaultParams();
 
 titlestr = 'T2 relaxation in laboratory reference frame';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+animateSpins(params, fH, titlestr, saveMovieFlag);
 
 %% T2 relaxation, rotating reference frame 
 fH = figure;
@@ -46,8 +37,7 @@ params.larmor = 0;
 params.dt = 0.002;
 
 titlestr = 'T2 relaxation in rotating reference frame';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+animateSpins(params, fH, titlestr, saveMovieFlag);
 
 %% T1 and T2 relaxation, rotating reference frame
 fH = figure;
@@ -57,9 +47,10 @@ params.dt        = 0.001;% longer dt because we need a longer demo for T1 reover
 params.nsteps    = 500;     
 params.flipangle = pi/2;
 params.fliptime  = 0.0100;
+
 titlestr = 'T1 and T2 relaxation in rotating reference frame';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+animateSpins(params, fH, titlestr, saveMovieFlag);
+
 
 %% T1 and T2 relaxation, matched time scales
 fH = figure;
@@ -70,9 +61,9 @@ params.dt        = 0.01;% longer dt because we need a longer demo for T1 reovery
 params.nsteps    = 150;     
 params.flipangle = pi/2;
 params.fliptime  = 0.100;
+
 titlestr = 'T1 and T2 relaxation with matched time constants';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+animateSpins(params, fH, titlestr, saveMovieFlag);
 
 %% Slow 90º flip in rotating reference frame
 fH = figure;
@@ -84,8 +75,8 @@ params.fliptime  = 0.001;  % when to initiate flip (seconds)
 params.larmor    = 0;
 
 titlestr = 'Slow 90º flip';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
+animateSpins(params, fH, titlestr, saveMovieFlag);
+
 
 %% Continuous flipping. 
 fH = figure;
@@ -99,18 +90,4 @@ params.flipangle = 50*pi;
 params.B1freq    = 250;
 
 titlestr = 'Continuous flipping';
-SPIN_MOVIE = animateSpins(params, fH, titlestr);
-writeMovie(SPIN_MOVIE, fullfile("movies", titlestr));
-
-
-%% save function
-
-function writeMovie(MOVIE, fname)
-
-v = VideoWriter(fname, "MPEG-4");
-v.FrameRate = 12;
-open(v);
-writeVideo(v, MOVIE);
-close(v);
-
-end
+animateSpins(params, fH, titlestr, saveMovieFlag);

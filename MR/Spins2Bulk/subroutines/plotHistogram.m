@@ -26,7 +26,7 @@ n = n/sum(n);
 
 plot(bincenters, n, color, 'DisplayName',whichdimension, 'LineWidth',3);
 
-title(sprintf('Spin density (%s)', whichdimension))
+title(sprintf('%s', whichdimension))
 set(gca, 'YLim', [0 .2], 'XLim', angleRange, 'XTick', -180:45:180); axis square
 
 end
