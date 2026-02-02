@@ -36,7 +36,7 @@ units.B1freq  = 'cycles/s';
 %   increasing bias toward the B0 direction, but the units are not
 %   meaningful. A value of 1 is a pretty subtle bias. A value of 4 is quite
 %   visible. 2 is reasonable. 
-params.k = 3;  
+params.k = 4;  
 units.k  ='arbitrary (>=0)';  
 
 % Flip angle in radians. 

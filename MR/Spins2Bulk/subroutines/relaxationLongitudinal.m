@@ -1,4 +1,4 @@
-function Spins = longitudinalRelaxation(Spins, params, B)
+function Spins = relaxationLongitudinal(Spins, params, B)
 
 [azimuth, elevation, r] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
 

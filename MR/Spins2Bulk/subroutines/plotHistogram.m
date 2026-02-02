@@ -6,11 +6,11 @@ switch lower(whichdimension)
     case 'azimuth'
         angleData = rad2deg(azimuth);
         angleRange = [-180 180];
-        color = 'g';
+        color = 'r';
     case 'elevation'
         angleData = rad2deg(elevation);
         angleRange = [-90 90];
-        color = 'r';
+        color = 'g';
 end
 
 bins = linspace(angleRange(1), angleRange(2), 30);

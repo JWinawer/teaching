@@ -20,6 +20,6 @@ plot3([0  M(1)], [0 M(2)], [0 M(3)], 'k-', ... total M0
    'LineWidth', 4); 
 
 % Keep current axis properties but replace plotted data for next time step
-set(gca, 'NextPlot', 'replacechildren', 'View', [-10 30]);
+set(gca, 'NextPlot', 'replacechildren', 'View', [-20 15]); %[-10 30]);
 
 end
