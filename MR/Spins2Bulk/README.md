@@ -1,22 +1,83 @@
-The purpose of these animations is to  simulatneously visualize individual  spins and bulk magnetization vectors in NMR phenomena. The visualizations are based on the 'uniform model' of spin distributions rather than the much more common 'alignment model', as explained in these papers:
+# Spins2Bulk
 
-- Williamson MP. Drawing Single NMR Spins and Understanding Relaxation. Natural Product Communications. 2019;14(5). https://doi.org/10.1177/1934578X19849790
-- Hanson, L.G. (2008), Is quantum mechanics necessary for understanding magnetic resonance?. Concepts Magn. Reson., 32A: 329-340. https://doi.org/10.1002/cmr.a.20123
+Animations that show individual nuclear spins and the bulk magnetization vector
+at the same time, so you can watch the bulk vector emerge as the sum of the
+spins.
 
-To view a simple demo:
+The visualizations use the **uniform model** of spin distributions rather than
+the much more common *alignment* or *two-cone* models. In the uniform model,
+individual spins point in any direction in 3D space, with only a slight
+statistical preference toward the applied field. See:
+
+- Williamson MP. Drawing Single NMR Spins and Understanding Relaxation.
+  *Natural Product Communications*. 2019;14(5).
+  https://doi.org/10.1177/1934578X19849790
+- Hanson LG. Is quantum mechanics necessary for understanding magnetic
+  resonance? *Concepts Magn. Reson.* 2008;32A:329-340.
+  https://doi.org/10.1002/cmr.a.20123
+
+The relevant figures are 2 and 3 in Hanson and figure 3 in Williamson.
+
+## Quick start
 
 ```matlab
+addpath('subroutines');
 fH = figure();
-[params, units] = spinsDefaultParams();
+params = spinsDefaultParams();
 animateSpins(params, fH);
 ```
 
-For additional examples, see
+`animateSpins` optionally returns the bulk magnetization over time, so you can
+analyze a run after it finishes:
 
 ```matlab
-s_SpinsToBulkM.m
+[M, params] = animateSpins(params, fH, 'my title');
+plot(params.t, M(:,3));   % Mz vs time
 ```
 
-Here are some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj) made by the code.
+For more examples, run the cells in `s_SpinsToBulkM.m`.
 
-Updated Aug 21, 2025
+Some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj)
+made by the code.
+
+## What the panels show
+
+- **Left**: every simulated spin as a dot on the unit sphere, plus the bulk
+  magnetization vector (black), its transverse component (red) and its
+  longitudinal component (green).
+- **Top right**: Mz and Mxy against time.
+- **Middle right**: distribution of azimuth, the phase around B0. A bump here
+  means the spins are in phase, which is what an RF pulse creates and what T2
+  destroys.
+- **Bottom right**: distribution of elevation, the angle away from the
+  transverse plane. The tilt toward +90 degrees *is* the Boltzmann bias, and it
+  is the entire source of the MR signal.
+
+## Parameters
+
+See `spinsDefaultParams` for the full list and units. The two that most affect
+what you see:
+
+- `k` sets how strongly spins prefer to point along B0. In a real magnet the
+  bias is about 1 part in 10^5, far too small to draw, so `k` is deliberately
+  exaggerated. 1 is subtle, 4 is obvious, 2-3 is a good compromise. `k = 0`
+  means no field at all, and the bulk magnetization correctly collapses to
+  zero.
+- `larmor` is the precession frequency. Setting it to 0 puts you in the
+  rotating reference frame, which is a compact way to show students that the
+  rotating frame is a change of viewpoint and not a change of physics.
+
+## A note on accuracy
+
+The T2 step size is derived analytically and reproduces the nominal `t2` to
+within about 1%. The T1 step size is calibrated so that the nominal `t1` is
+also reproduced, but with a caveat: exaggerating `k` so the bias is visible
+also makes longitudinal relaxation slightly non-exponential, so the observed
+time constant depends a little on how the magnetization was prepared. The
+calibration targets the case these demos use, a 90 degree pulse applied to the
+equilibrium distribution, which lands within about 2% over `k` = 1 to 5. See
+the comments in `relaxationLongitudinal.m`.
+
+Requires base MATLAB only; no toolboxes.
+
+Updated Sep 2026

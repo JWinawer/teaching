@@ -1,42 +1,60 @@
-function B_dist = boltzmannDistribution(k)
-% Generate a probabilitiy distritbuion of the elevation of spin axes in a
-% magnetic field, assuming the magnetic field is in the Z+ direction
-% (elevation pi/2). 
+function B = boltzmannDistribution(k)
+% Distribution of spin-axis elevations in a magnetic field along Z+.
 %
-% The energy is assumed to increase with the deviation from Z+. The input k
-% is a scalar subsuming three constants: the slope of energy vs elevation
-% (or really, energy vs the negative projection onto Z), the boltzmann
-% constant K, and the temperature. The latter two are used in converting
-% energy to probability. There is no attempt at capturing meaningul
-% physical values, as we would need to simulate trillions of spins for
-% that. Instead, we just choose a value of k that creates a nice amount of
-% visible bias in the spin distribution as a function of elevation. Values
-% of 2 to 4 seem to work well.
+%   B = boltzmannDistribution(k)
+%
+% Returns a struct with three fields:
+%   B.pdf(x)    probability density of elevation x (radians, in [-pi/2 pi/2])
+%   B.sample(n) draw n elevations from that density (row vector)
+%   B.Mz        equilibrium magnetization per spin, i.e. mean of sin(elevation)
+%
+% The energy of a spin is lowest when it points along Z+ (elevation pi/2)
+% and increases with the deviation from Z+, so the Boltzmann distribution is
+%
+%       p ~ exp(-E/(kT)),   E = -sin(elevation)
+%
+% The input k subsumes three constants: the slope of energy vs. the
+% projection onto Z, the Boltzmann constant, and the temperature. No attempt
+% is made to capture physically meaningful values -- the real bias is about
+% 1 part in 10^5, which would require simulating trillions of spins to see.
+% Instead k is chosen to make the bias visible. A value of 1 is a subtle
+% bias, 4 is quite visible, and 2-3 is a good compromise. k = 0 means no
+% field, i.e. a uniform distribution of orientations.
+%
+% Note that the circumference of a sphere at a given elevation is
+% proportional to abs(cos(elevation)), so the density per unit elevation
+% must be scaled by that factor for the spins to be spread uniformly over
+% the sphere's surface when k is 0.
+%
+% Everything below is in closed form, so this needs no toolboxes and the
+% sampling is exact rather than interpolated from a numeric CDF.
 
-% x the elevation of the spin axis
-x = linspace(-pi/2,pi/2, 10000);
-dx = x(2)-x(1);
+validateattributes(k, {'numeric'}, {'scalar','real','nonnegative','finite'});
 
-% Probability of spin axis elevation:
-%   Boltzmann distribution
-%       p ~ exp(-E/(kT));
-%   The energy, E, is minimal at 90º elevation, ie the B0+ direction, and
-%   declines with a cosine dependence for other elevations. But the
-%   circumference of a sphere at a particular elevation is proportional to
-%   abs(cosine) of that elevation, and we need to scale the probability by
-%   this factor to achieve uniform distribution per unit area when k is 0. 
+% Normalizing constant: integral of exp(k*sin x)*cos x over [-pi/2 pi/2].
+if k == 0
+    Z = 2;
+else
+    Z = 2*sinh(k)/k;
+end
 
-Energy      = @(X) -cos(X-pi/2);
-Probability = @(X) exp(-k*Energy(X));
-P           = @(X) Probability(X).*abs(cos(X));
-PDF         = @(X) P(X) ./ sum(P(X)) / dx;
+B.pdf = @(x) exp(k*sin(x)) .* abs(cos(x)) .* (abs(x) <= pi/2) / Z;
 
-% Convert to a probability density function
-fx = PDF(x);   
+% Sampling. Substituting u = sin(elevation) turns the density into
+% p(u) ~ exp(k*u) on [-1 1], whose cumulative distribution inverts
+% analytically. The form below stays accurate for large k.
+if k == 0
+    B.sample = @(n) asin(2*rand(1,n) - 1);
+else
+    B.sample = @(n) asin(min(max( ...
+        1 + log(exp(-2*k) + rand(1,n)*(1 - exp(-2*k)))/k, -1), 1));
+end
 
-% convert to a cumulative probability distribution 
-Fx = cumsum(fx); Fx = Fx/Fx(end);
-Fx(1) = 0;  Fx(end)=1; % ensure the CDF starts at 0 and ends at 1
-B_dist = makedist('PiecewiseLinear', 'x', x, 'Fx', Fx);
+% Equilibrium magnetization per spin is the Langevin function of k.
+if k == 0
+    B.Mz = 0;
+else
+    B.Mz = coth(k) - 1/k;
+end
 
 end
