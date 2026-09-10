@@ -42,6 +42,9 @@ lambda = 2 + 0.2258*params.k^2 - 0.0109*params.k^3;
 
 dx = sqrt(params.dt / (2 * lambda * params.t1));
 
+% t1 = inf means no longitudinal relaxation, so there is nothing to do
+if dx == 0, return; end
+
 [azimuth, elevation, r] = cart2sph(Spins(:,1), Spins(:,2), Spins(:,3));
 
 % Probability of stepping up vs. down, from the equilibrium density at the

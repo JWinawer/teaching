@@ -26,7 +26,7 @@ end
 [figureHandle, tH] = spinsSetUpFigure(figureHandle, titleString);
 
 % Initialize spins at thermal equilibrium
-[Spins, B_dist] = initializeSpins(parameters);
+[Spins, B_dist, ~, offsetStep] = initializeSpins(parameters);
 
 % Scale for the bulk magnetization plots. Use the expected equilibrium
 % magnetization rather than the realized one, so that any wobble away from
@@ -45,17 +45,8 @@ M = zeros(parameters.nsteps, 3);
 % Dynamics
 for stepnum = 1:parameters.nsteps
 
-    % Larmor precession
-    Spins = rotateB0(Spins, parameters);
-
-    % B1 flip
-    Spins = rotateB1(Spins, parameters, stepnum);
-
-    % T2 relaxation
-    Spins = relaxationTransverse(Spins, parameters);
-
-    % T1 relaxation
-    Spins = relaxationLongitudinal(Spins, parameters, B_dist);
+    % Precession, RF pulse, T2 and T1, in that order
+    Spins = spinsTimeStep(Spins, parameters, stepnum, B_dist, offsetStep);
 
     % Bulk magnetization
     M(stepnum,:) = sum(Spins)/Mscale;

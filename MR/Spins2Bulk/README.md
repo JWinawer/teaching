@@ -37,6 +37,24 @@ plot(params.t, M(:,3));   % Mz vs time
 
 For more examples, run the cells in `s_SpinsToBulkM.m`.
 
+For a run with no graphics, which is much faster and useful when you want a
+curve rather than an animation, use `simulateSpins`:
+
+```matlab
+[M, params] = simulateSpins(params);
+plot(params.t, vecnorm(M(:,1:2), 2, 2));   % Mxy vs time
+```
+
+## Tutorials
+
+`tutorials/` holds worked tutorials that use these animations to build up the
+underlying ideas. Each mixes explanation, formulas and runnable code, and is a
+plain-text MATLAB Live Script: open it in MATLAB and it renders as a document.
+
+- `tutorial1_equilibrium.m` — where the MR signal comes from, the Boltzmann
+  distribution, and why the real effect is a hundred thousand times smaller
+  than the animations show.
+
 Some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj)
 made by the code.
 
@@ -66,11 +84,37 @@ what you see:
 - `larmor` is the precession frequency. Setting it to 0 puts you in the
   rotating reference frame, which is a compact way to show students that the
   rotating frame is a change of viewpoint and not a change of physics.
+- `b0spread` is the spread of static B0 offsets across spins, in Hz. It is what
+  separates T2* from T2. 0 means a perfectly uniform field. Use
+  `b0spreadForT2star` if you would rather specify the T2* you want to see:
+
+  ```matlab
+  params.b0spread = b0spreadForT2star(0.040, params.t2);   % T2* of 40 ms
+  ```
+
+## Pulse sequences
+
+`flipangle`, `fliptime` and `flipphase` may each be a vector, so you can apply a
+train of pulses. A spin echo is two pulses:
+
+```matlab
+params.flipangle = [pi/2 pi];        % 90 then 180
+params.fliptime  = [0.001 0.021];    % the echo lands near t = 0.042 s
+params.flipphase = [0 pi/2];         % 90 about x, 180 about y
+```
+
+The 180 degree pulse reverses the dephasing caused by the static field spread,
+which is why the signal comes back, but it cannot reverse the random walk that
+causes T2. So the echo peaks at `exp(-TE/t2)`, not `exp(-TE/t2star)`. That
+difference is the whole point of the spin echo, and it is visible in the
+animation as a fan of spins that spreads out, flips over, and re-converges.
 
 ## A note on accuracy
 
 The T2 step size is derived analytically and reproduces the nominal `t2` to
-within about 1%. The T1 step size is calibrated so that the nominal `t1` is
+within about 1%. The same is true of T2*: the simulated decay matches
+`1/t2star = 1/t2 + 1/t2prime` to within about 1% over a wide range of field
+spreads. The T1 step size is calibrated so that the nominal `t1` is
 also reproduced, but with a caveat: exaggerating `k` so the bias is visible
 also makes longitudinal relaxation slightly non-exponential, so the observed
 time constant depends a little on how the magnetization was prepared. The
