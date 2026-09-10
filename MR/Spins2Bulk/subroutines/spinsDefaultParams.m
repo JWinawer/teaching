@@ -73,6 +73,18 @@ units.fliptime  = 's';
 params.flipphase = 0;
 units.flipphase  = 'radians';
 
+% Playback rate, in frames per second.
+%   Sets how fast the animation is shown, both on screen and in a saved
+%   movie. This is playback speed, not simulation speed: the run still
+%   covers nsteps*dt seconds of simulated time either way, so lowering this
+%   shows the same physics in slower motion.
+%
+%   On screen the frames are paced to this rate. Without pacing the loop
+%   runs at a few milliseconds per frame, far faster than anyone can watch,
+%   and the result looks like an uneven blur rather than an animation.
+params.frameRate = 6;
+units.frameRate  = 'frames/s';
+
 % Spread of static B0 offsets across spins, in Hz.
 %   This is what produces T2* decay, as distinct from T2. Every spin is
 %   given its own fixed frequency offset, drawn from a Lorentzian

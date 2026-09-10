@@ -42,8 +42,13 @@ animateSpins(params, gcf, 'No magnetic field', true);
 params.k      = 3;
 params.larmor = 10;   % the field makes them precess, too
 
+% Run for exactly one full revolution, so that a looped movie joins up
+% seamlessly. One cycle takes 1/larmor seconds, which is 1/(larmor*dt) steps.
+params.nsteps = round(1 / (params.larmor * params.dt));
+params.frameRate = 25;   % smooth enough to loop without looking choppy
+
 figure; %[output:516219c1]
-animateSpins(params, gcf, 'In a magnetic field, B0 along z'); %[output:516219c1]
+animateSpins(params, gcf, 'In a magnetic field, B0 along z', true); %[output:516219c1]
 %[text] Compare this with the previous animation. The whole population is now turning about the $z$ axis, which is the precession. The spins still point in every direction, and no spin is neatly lined up with the field. But now look at the **Elevation** histogram at the bottom right: it slopes upward toward $+90^\\circ$. More spins point along the field than against it.
 %[text] That excess is the entire source of the MR signal. The green vector, the bulk magnetization along $z$, is no longer zero.
 %%

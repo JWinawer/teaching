@@ -45,6 +45,36 @@ curve rather than an animation, use `simulateSpins`:
 plot(params.t, vecnorm(M(:,1:2), 2, 2));   % Mxy vs time
 ```
 
+## Playback speed and movies
+
+`params.frameRate` sets how fast the animation plays, both on screen and in a
+saved movie. It is playback speed, not simulation speed: the run covers
+`nsteps*dt` seconds of simulated time either way, so lowering it shows the same
+physics in slower motion.
+
+On screen the frames are paced to that rate. This matters: a single step takes
+only a few milliseconds, so without pacing the animation races past unevenly
+and is impossible to follow.
+
+To save a movie, pass `true` as the fourth argument. The path comes back as the
+third output, so you can play it straight away:
+
+```matlab
+[~, ~, movieFile] = animateSpins(params, figure, 'my title', true);
+implay(movieFile);          % needs Image Processing Toolbox
+```
+
+Movies go in `movies/`, which is gitignored. Note that saving is much slower
+than watching, because capturing each frame costs far more than drawing it, so
+leave `saveMovieFlag` off unless you actually want the file.
+
+For a movie that loops seamlessly, make the run an exact whole number of
+revolutions. One revolution takes `1/larmor` seconds, so:
+
+```matlab
+params.nsteps = round(1 / (params.larmor * params.dt));
+```
+
 ## Tutorials
 
 `tutorials/` holds worked tutorials that use these animations to build up the

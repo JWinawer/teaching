@@ -1,4 +1,4 @@
-function [M, parameters] = animateSpins(parameters, figureHandle, titleString, saveMovieFlag)
+function [M, parameters, movieFile] = animateSpins(parameters, figureHandle, titleString, saveMovieFlag)
 % Animate a population of spins and the bulk magnetization they sum to.
 %
 %   [M, parameters] = animateSpins(parameters, figureHandle, titleString, saveMovieFlag)
@@ -7,6 +7,16 @@ function [M, parameters] = animateSpins(parameters, figureHandle, titleString, s
 % magnetization at each time step in units of the equilibrium magnetization,
 % so that you can plot or analyze a run after it finishes. parameters is
 % returned with the derived fields added (see spinsAddDerivedParameters).
+% movieFile is the path of the saved movie, or '' if none was saved.
+%
+% Playback on screen is at the mercy of how fast the figure can be redrawn,
+% which is uneven. For a smooth, evenly paced version, save a movie and play
+% that back instead:
+%
+%   [~, ~, movieFile] = animateSpins(params, figure, 'my title', true);
+%   implay(movieFile);
+%
+% params.frameRate sets the playback rate, on screen and in the movie.
 %
 % See also SPINSDEFAULTPARAMS, S_SPINSTOBULKM
 
@@ -15,8 +25,19 @@ if ~exist('figureHandle', 'var') || isempty(figureHandle), figureHandle = figure
 if ~exist('titleString', 'var'),  titleString  = ''; end
 if ~exist('saveMovieFlag', 'var') || isempty(saveMovieFlag), saveMovieFlag = false; end
 
+movieFile = '';
+
 % Derived parameters
 parameters = spinsAddDerivedParameters(parameters);
+
+% Playback rate. Frames are paced to this on screen; a saved movie is
+% rendered as fast as it can be and then plays back at this rate.
+if isfield(parameters, 'frameRate')
+    frameRate = parameters.frameRate;
+else
+    frameRate = 6;
+end
+frameInterval = 1/frameRate;
 
 if saveMovieFlag
     MOV(parameters.nsteps) = struct('cdata', [], 'colormap', []);
@@ -42,6 +63,8 @@ end
 
 M = zeros(parameters.nsteps, 3);
 
+frameClock = tic;
+
 % Dynamics
 for stepnum = 1:parameters.nsteps
 
@@ -66,13 +89,18 @@ for stepnum = 1:parameters.nsteps
     nexttile(tH, 12);
     plotHistogram(Spins, 'Elevation');
 
-    % limitrate lets the renderer drop frames to keep up, which is what we
-    % want on screen; when saving a movie every frame has to be real.
+    drawnow
+
     if saveMovieFlag
-        drawnow
+        % No point pacing: the movie carries its own frame rate, so render
+        % as fast as the machine allows.
         MOV(stepnum) = getframe(figureHandle);
     else
-        drawnow limitrate
+        % Pace the frames. A step takes only a few milliseconds, so without
+        % this the animation races past unevenly and is impossible to follow.
+        waitFor = frameInterval - toc(frameClock);
+        if waitFor > 0, pause(waitFor); end
+        frameClock = tic;
     end
 end
 
@@ -85,11 +113,12 @@ if saveMovieFlag
     if isempty(strtrim(name)), name = 'spins'; end
 
     v = VideoWriter(fullfile(movieDir, name), 'MPEG-4');
-    v.FrameRate = 6;
+    v.FrameRate = frameRate;
     open(v);
     writeVideo(v, MOV);
     close(v);
-    fprintf('Wrote %s\n', fullfile(movieDir, [name '.mp4']));
+    movieFile = fullfile(movieDir, [name '.mp4']);
+    fprintf('Wrote %s\n', movieFile);
 end
 
 end
