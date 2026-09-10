@@ -20,9 +20,24 @@ units.t2  = 's';
 params.t1 = 0.8;
 units.t1  = 's';
 
-% Larmor (B0) frequency in cycles per second.  
-%   Set to 0 for rotating reference frame. This parameter only affects how
-%   fast the spins appear to rotate.
+% Larmor (B0) frequency in cycles per second.
+%   How fast the spins precess about B0. Set to 0 to work in the rotating
+%   reference frame, where the precession is hidden and everything else is
+%   easier to see.
+%
+%   Note that larmor and k are both consequences of the same field: the
+%   precession rate is proportional to B0, and so is the strength of the
+%   Boltzmann bias. The code lets you set them independently because that is
+%   convenient for teaching, but two of the four combinations mean something
+%   specific and one is simply unphysical:
+%
+%     k > 0, larmor > 0   a field, viewed in the laboratory frame
+%     k > 0, larmor = 0   the same field, viewed in the rotating frame
+%     k = 0, larmor = 0   no field at all
+%     k = 0, larmor > 0   nothing: there is no field to precess about
+%
+%   So if you set k = 0 to represent "no magnetic field", set larmor = 0 as
+%   well, or you will show spins precessing about an axis that is not there.
 params.larmor = 10;
 units.larmor  = 'cycles/s';
 
