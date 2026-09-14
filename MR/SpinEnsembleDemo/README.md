@@ -35,7 +35,7 @@ analyze a run after it finishes:
 plot(params.t, M(:,3));   % Mz vs time
 ```
 
-For more examples, run the cells in `s_SpinsToBulkM.m`.
+For more examples, run the cells in `s_NMRWorkedExamples.m`.
 
 For a run with no graphics, which is much faster and useful when you want a
 curve rather than an animation, use `simulateSpins`:

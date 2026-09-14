@@ -41,7 +41,7 @@ kRealistic = 3*polarization;
 fprintf('Realistic polarization at 3T, 310K = %.3e (about 1 in %.0f)\n', polarization, 1/polarization);
 fprintf('Realistic k = %.3e ; k used for display = 3 ; exaggeration factor = %.0e\n', kRealistic, 3/kRealistic);
 
-%% 2. T1 recovery after a 90-degree pulse (reproduces s_SpinsToBulkM T1/T2 cell)
+%% 2. T1 recovery after a 90-degree pulse (reproduces s_NMRWorkedExamples T1/T2 cell)
 params = spinsDefaultParams();
 params.larmor    = 0;      % rotating frame
 params.nspins    = 20000;  % enough spins that the curve is clean
@@ -85,7 +85,7 @@ pfit = polyfit(tt(valid), log(mzinf - mz(valid)), 1);
 T1fit = -1/pfit(1);
 fprintf('Fitted T1 from simulated Mz(t) = %.4f s (nominal was %.2f s)\n', T1fit, params.t1);
 
-%% 3. T2 vs T2* vs spin echo (reproduces the last cells of s_SpinsToBulkM.m)
+%% 3. T2 vs T2* vs spin echo (reproduces the last cells of s_NMRWorkedExamples.m)
 params2 = spinsDefaultParams();
 params2.larmor   = 0;
 params2.t1       = inf;

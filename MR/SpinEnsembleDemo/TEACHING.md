@@ -9,7 +9,7 @@ with the code as it stands.
 
 **Update, September 2026.** Section 2 (field inhomogeneity, T2*, spin echo,
 BOLD) is now built. See `params.b0spread`, the vector `flipangle` / `fliptime` /
-`flipphase` fields, and the last three cells of `s_SpinsToBulkM.m`. A first
+`flipphase` fields, and the last three cells of `s_NMRWorkedExamples.m`. A first
 worked tutorial, `tutorials/tutorial1_equilibrium.m`, covers the Boltzmann
 distribution and equilibrium.
 

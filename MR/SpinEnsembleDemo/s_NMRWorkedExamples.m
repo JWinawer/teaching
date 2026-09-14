@@ -1,4 +1,4 @@
-% s_SpinsToBulkM
+% s_NMRWorkedExamples
 %
 % Worked examples of the spin animations. Run one cell at a time.
 % Each cell sets up a parameter struct and calls animateSpins.
