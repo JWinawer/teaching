@@ -1,6 +1,6 @@
 # Using the spin animations in the fMRI course
 
-Notes on how to get the `Spins2Bulk` animations in front of students and into
+Notes on how to get the `SpinEnsembleDemo` animations in front of students and into
 lecture material. Written September 2026, for an fMRI course aimed at early
 stage PhD students in cognitive neuroscience with limited physics background.
 

@@ -1,5 +1,5 @@
 %[text] # Tutorial 1. Spins at equilibrium in a magnetic field
-%[text] This is the first of a series of tutorials that use the Spins2Bulk animations to build up the ideas behind MR imaging. It should take about 30 minutes.
+%[text] This is the first of a series of tutorials that use the SpinEnsembleDemo animations to build up the ideas behind MR imaging. It should take about 30 minutes.
 %[text] By the end you should be able to say, in your own words, where the MR signal actually comes from, and why it is so small.
 %[text] Run each section in turn with **Run Section**, read the text, and answer the questions as you go. You do not need any physics background beyond the idea that a magnetic field can push on a magnet.
 %[text] ## Setup

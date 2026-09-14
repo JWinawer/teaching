@@ -1,4 +1,4 @@
-# Spins2Bulk
+# SpinEnsembleDemo
 
 Animations that show individual nuclear spins and the bulk magnetization vector
 at the same time, so you can watch the bulk vector emerge as the sum of the
