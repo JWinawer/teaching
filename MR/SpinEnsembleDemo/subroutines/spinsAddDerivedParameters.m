@@ -6,12 +6,20 @@ function P = spinsAddDerivedParameters(P)
 % Backward compatibility: fields added after the original release
 if ~isfield(P, 'b0spread'),  P.b0spread  = 0; end
 if ~isfield(P, 'flipphase'), P.flipphase = 0; end
+if ~isfield(P, 'fieldOnTime'), P.fieldOnTime = 0; end
 
 % Time vector (seconds)
 P.t = (1:P.nsteps) * P.dt;
 
 % Radians of Larmor precession per time step
 P.larmorStep = P.larmor * P.dt * 2 * pi;
+
+% Whether B0 is on at each time step, and the precession phase the spins
+% have built up by each step. The phase only advances while the field is on,
+% so an RF pulse given after a late switch-on still turns in step with the
+% spins. When the field is on throughout, this is simply n*larmorStep.
+P.fieldOn     = P.t >= P.fieldOnTime;
+P.larmorPhase = P.larmorStep * cumsum(P.fieldOn);
 
 % Standard deviation, in radians, of the azimuthal random step that produces
 % T2 decay. A random walk in phase with per-step variance s^2 leaves the

@@ -5,7 +5,7 @@ function [Spins, B_dist, M0, offsetStep] = initializeSpins(params)
 %
 % Spins      is nspins x 3, one unit vector per row
 % B_dist     is the equilibrium elevation distribution (boltzmannDistribution)
-% M0         is the bulk magnetization vector at equilibrium, sum of Spins
+% M0         is the bulk magnetization vector at the start, sum of Spins
 % offsetStep is nspins x 1, the extra azimuthal phase per time step that
 %            each spin picks up from its own static B0 offset
 %
@@ -17,8 +17,16 @@ function [Spins, B_dist, M0, offsetStep] = initializeSpins(params)
 
 B_dist = boltzmannDistribution(params.k);
 
-% Elevation is biased toward B0 (Z+); azimuth is uniform.
-elevation = B_dist.sample(params.nspins);
+% Elevation is biased toward B0 (Z+); azimuth is uniform. If the field is
+% still off at the first step (see params.fieldOnTime), there is nothing to
+% bias the spins yet, so they start spread evenly over the sphere instead.
+% B_dist still describes the equilibrium they relax toward once it comes on.
+startsInField = ~isfield(params, 'fieldOn') || params.fieldOn(1);
+if startsInField
+    elevation = B_dist.sample(params.nspins);
+else
+    elevation = boltzmannDistribution(0).sample(params.nspins);
+end
 azimuth   = rand(size(elevation)) * 2*pi;
 
 % Spherical to cartesian, on the unit sphere

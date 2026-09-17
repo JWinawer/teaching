@@ -1,14 +1,21 @@
-function plotSpins(Spins, M)
+function plotSpins(Spins, M, isRotatingFrame)
 % Draw the individual spins and the bulk magnetization vector they sum to.
 %
-%   plotSpins(Spins, M)
+%   plotSpins(Spins, M, isRotatingFrame)
 %
 % Spins is nspins x 3 and M is the 1 x 3 bulk magnetization, in units of the
-% equilibrium magnetization.
+% equilibrium magnetization. If isRotatingFrame is true (default false), the
+% transverse axes are labelled X' and Y', the usual names for the axes of
+% the rotating reference frame, and the plot is titled "Rotating frame". Z
+% needs no prime, because the frame rotates about it.
 %
 % The graphics objects are built once and then updated in place on later
 % calls. Rebuilding a scatter of several thousand points every frame is by
 % far the slowest part of the animation, so this is what keeps it smooth.
+
+if ~exist('isRotatingFrame', 'var') || isempty(isRotatingFrame)
+    isRotatingFrame = false;
+end
 
 ax = gca;
 ud = ax.UserData;
@@ -40,7 +47,17 @@ else
 
     axis(ax, [-1 1 -1 1 -1 1]);
     axis(ax, 'square');
-    xlabel(ax, 'X'); ylabel(ax, 'Y'); zlabel(ax, 'Z');
+    if isRotatingFrame
+        % Short labels, with the frame named once in the title: a label like
+        % "Y' (rotating frame)" runs off the edge of the figure.
+        xlabel(ax, "X'");
+        ylabel(ax, "Y'");
+        title(ax, "Rotating frame", FontWeight="normal");
+    else
+        xlabel(ax, "X");
+        ylabel(ax, "Y");
+    end
+    zlabel(ax, "Z");
     set(ax, 'FontSize', 16, 'View', [-10 15]);
 
     ax.UserData = ud;

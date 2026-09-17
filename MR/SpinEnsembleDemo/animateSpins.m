@@ -18,12 +18,16 @@ function [M, parameters, movieFile] = animateSpins(parameters, figureHandle, tit
 %
 % params.frameRate sets the playback rate, on screen and in the movie.
 %
-% See also SPINSDEFAULTPARAMS, S_SPINSTOBULKM
+% See also SPINSDEFAULTPARAMS, S_NMRWORKEDEXAMPLES
 
 if ~exist('parameters', 'var')   || isempty(parameters),   parameters   = spinsDefaultParams(); end
 if ~exist('figureHandle', 'var') || isempty(figureHandle), figureHandle = figure(); end
 if ~exist('titleString', 'var'),  titleString  = ''; end
 if ~exist('saveMovieFlag', 'var') || isempty(saveMovieFlag), saveMovieFlag = false; end
+
+% Accept a string as well as a character vector for the title. The movie
+% file name is built by concatenation below, which needs a char.
+titleString = char(titleString);
 
 movieFile = '';
 
@@ -45,6 +49,17 @@ end
 
 % Set up figure
 [figureHandle, tH] = spinsSetUpFigure(figureHandle, titleString);
+
+% If the field switches on partway through the run, say so in the title and
+% mark the moment on the magnetization plot.
+showFieldState = ~all(parameters.fieldOn);
+
+% With larmor = 0 we are watching in the rotating reference frame, so label
+% the transverse axes X' and Y'. The check is made once here, and plotSpins
+% uses it only when it first builds the axes, so it costs nothing per frame.
+% With k = 0 there is no field, hence no Larmor frequency and no rotating
+% frame, so the axes keep their ordinary names.
+isRotatingFrame = abs(parameters.larmor) < eps && parameters.k > 0;
 
 % Initialize spins at thermal equilibrium
 [Spins, B_dist, ~, offsetStep] = initializeSpins(parameters);
@@ -76,11 +91,16 @@ for stepnum = 1:parameters.nsteps
 
     % Plot instantaneous spins
     nexttile(tH, 1, [3 3]);
-    plotSpins(Spins, M(stepnum,:));
+    plotSpins(Spins, M(stepnum,:), isRotatingFrame);
 
     % Plot bulk magnetization
     nexttile(tH, 4);
     plotBulk(parameters.t, M(1:stepnum,:))
+    if showFieldState && stepnum == 1
+        % No text label: the panel is too small for one to be legible, and
+        % the figure title already says whether the field is on.
+        xline(gca, parameters.fieldOnTime, "--");
+    end
 
     % Plot spin angle histograms
     nexttile(tH, 8);
@@ -88,6 +108,15 @@ for stepnum = 1:parameters.nsteps
 
     nexttile(tH, 12);
     plotHistogram(Spins, 'Elevation');
+
+    if showFieldState
+        if parameters.fieldOn(stepnum)
+            fieldLabel = "B_0 on";
+        else
+            fieldLabel = "B_0 off";
+        end
+        tH.Title.String = strtrim(sprintf("%s   (%s)", titleString, fieldLabel));
+    end
 
     drawnow
 

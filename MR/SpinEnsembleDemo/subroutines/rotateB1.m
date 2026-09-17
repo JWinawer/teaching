@@ -16,10 +16,10 @@ pulse = params.RFpulse(stepnum);
 
 if pulse == 0, return; end
 
-% Direction of the B1 axis in the transverse plane. It tracks the Larmor
-% phase, plus whatever fixed phase this pulse was given: 0 is along +x and
-% pi/2 is along +y.
-theta = stepnum * params.larmor * 2*pi * params.dt + params.flipphase(pulse);
+% Direction of the B1 axis in the transverse plane. It tracks the
+% precession phase the spins have built up so far, plus whatever fixed phase
+% this pulse was given: 0 is along +x and pi/2 is along +y.
+theta = params.larmorPhase(stepnum) + params.flipphase(pulse);
 
 % Radians of rotation about that axis in one time step. This is set in
 % spinsAddDerivedParameters so that the steps this pulse lands on sum to

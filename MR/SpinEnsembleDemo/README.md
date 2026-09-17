@@ -35,7 +35,7 @@ analyze a run after it finishes:
 plot(params.t, M(:,3));   % Mz vs time
 ```
 
-For more examples, run the cells in `s_NMRWorkedExamples.m`.
+For more examples, run the cells in `tutorials/s_NMRWorkedExamples.m`.
 
 For a run with no graphics, which is much faster and useful when you want a
 curve rather than an animation, use `simulateSpins`:
@@ -85,6 +85,29 @@ plain-text MATLAB Live Script: open it in MATLAB and it renders as a document.
   distribution, and why the real effect is a hundred thousand times smaller
   than the animations show.
 
+It also holds two ordinary scripts:
+
+- `s_NMRWorkedExamples.m` — worked cells for precession, pulses, T1, T2, T2*,
+  the spin echo and BOLD. Run one cell at a time.
+- `run_demo.m` — short runs of `simulateSpins` with no animation. It makes
+  Figures 6-8 of `docs/nmr_relaxation_summary.md` and prints the numbers
+  quoted in their captions.
+
+## Docs
+
+`docs/` holds background write-ups. Their figures are in `docs/figures/`.
+
+- `TEACHING.md` — notes on using the animations in an fMRI course: getting
+  students running, lecture ideas, exercises, and planned tutorials.
+
+- `nmr_relaxation_summary.md` — why spins relax: which parts of NMR the
+  classical vector picture gets right (precession, pulses, equilibrium
+  magnetization), and why T1 relaxation needs quantum mechanics. Built from
+  Williamson (2019) and Hanson (2008), with figures from this code.
+- `alignment_vs_uniform_model.md` — how the common "spins are either up or
+  down" picture relates to the uniform model used here, and whether an
+  introductory MRI text needs the up/down picture at all.
+
 Some [movies](https://drive.google.com/drive/folders/1Ni6xqJajgEw1TNGQrfSQUiMYROcS5pJj)
 made by the code.
 
@@ -113,7 +136,15 @@ what you see:
   zero.
 - `larmor` is the precession frequency. Setting it to 0 puts you in the
   rotating reference frame, which is a compact way to show students that the
-  rotating frame is a change of viewpoint and not a change of physics.
+  rotating frame is a change of viewpoint and not a change of physics. The
+  transverse axes are then labelled X' and Y', the usual names in the rotating
+  frame. (With `k = 0` as well there is no field, so no rotating frame, and
+  the axes keep their ordinary names.)
+- `fieldOnTime` switches the field on partway through a run. Before that
+  moment the spins are spread evenly and sit still. From then on they precess
+  and relax toward equilibrium, so Mz climbs from 0 with time constant T1.
+  This is how a sample becomes magnetized when it enters the scanner. The
+  default, 0, means the field is on from the start.
 - `b0spread` is the spread of static B0 offsets across spins, in Hz. It is what
   separates T2* from T2. 0 means a perfectly uniform field. Use
   `b0spreadForT2star` if you would rather specify the T2* you want to see:

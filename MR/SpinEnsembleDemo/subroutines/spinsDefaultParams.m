@@ -106,4 +106,23 @@ units.frameRate  = 'frames/s';
 params.b0spread = 0;
 units.b0spread  = 'Hz';
 
+% Time at which B0 is switched on, in seconds.
+%   0, the default, means the field is on from the start and the spins
+%   begin at thermal equilibrium. A positive value starts the run with no
+%   field: the spins point in random directions, with no bias, and sit
+%   still. At fieldOnTime the field switches on, and two things begin at
+%   the same moment: every spin starts to precess, and the population starts
+%   to relax toward the Boltzmann distribution set by k.
+%
+%   That relaxation is T1 recovery starting from Mz = 0, just as after a 90
+%   degree pulse. It is how a sample becomes magnetized when it is first
+%   put in the scanner. Unlike after a pulse, though, there is never any
+%   phase coherence, so Mxy stays at zero: precession alone gives no signal.
+%
+%   Molecules still tumble before the field is on. But with no field there
+%   is no preferred direction, so the spread of spins does not change, and
+%   leaving them still keeps the picture clear.
+params.fieldOnTime = 0;
+units.fieldOnTime  = "s";
+
 end
