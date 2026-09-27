@@ -1,4 +1,4 @@
-# kspace_demo
+# KspaceDemo
 Simulation of MRI epi acquisition
 
 To run, enter
