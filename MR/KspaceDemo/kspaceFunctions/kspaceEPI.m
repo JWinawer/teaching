@@ -1,7 +1,7 @@
-function [gx, gy, T, shotStart] = kspaceEPI(sim)
+function [gx, gy, T] = kspaceEPI(sim)
 % Generate an EPI gradient sequence
 %
-%   [gx, gy, T, shotStart] = kspaceEPI(sim)
+%   [gx, gy, T] = kspaceEPI(sim)
 %
 % EPI works in a kind of zigzag. We start at one corner of k-space, move
 % across a row in the readout (frequency encode) direction, step to the next
@@ -15,8 +15,7 @@ function [gx, gy, T, shotStart] = kspaceEPI(sim)
 % direction has a far lower bandwidth per pixel.
 %
 % Outputs are k-space steps per sample (cycles per metre) and the duration of
-% each step (in dwell times). shotStart is all false, because this is a
-% single-shot sequence. See kspaceMakePulseSequence.
+% each step (in dwell times). See kspaceMakePulseSequence.
 
 freq     = sim.freq;
 nsamples = freq^2;   % one sample per reconstructed pixel
@@ -25,7 +24,6 @@ dk       = 1/sim.FOV; % k-space step between samples, cycles per metre
 T  = ones(1, nsamples);
 gx = zeros(1, nsamples);   % phase encode
 gy = zeros(1, nsamples);   % readout
-shotStart = false(1, nsamples);
 
 % Readout (y gradient): + on odd rows, - on even rows
 for row = 1:2:freq

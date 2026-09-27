@@ -57,7 +57,6 @@ sim.bandwidth    = bandwidth;
 sim.dt           = dt;
 sim.echoTime     = params.echoTime*ms;
 sim.t2star       = t2star;
-sim.oversample   = params.oversample;
 sim.B0           = params.B0;
 sim.gamma        = gamma;
 sim.gx           = gx;

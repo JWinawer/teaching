@@ -83,14 +83,9 @@ end
 nSamples = length(gradients.T);
 waitbarStep = round(nSamples/10);
 for t = 1:nSamples
-    if gradients.shotStart(t)
-        % A new shot starts from a new excitation
-        spins.total = spins.afterDelay;
-    else
-        % Rotate (and decay) every spin by this step
-        spins = kspaceComputeOnePoint(sim, gradients, xygrid, b0noise, spins, t);
-        spins = kspaceGetCurrentBasisFunctions(spins);
-    end
+    % Rotate (and decay) every spin by this step
+    spins = kspaceComputeOnePoint(sim, gradients, xygrid, b0noise, spins, t);
+    spins = kspaceGetCurrentBasisFunctions(spins);
 
     % Measure one point in k-space
     kspace = kspaceGetCurrentSignal(kspace, t, im, spins, sim);

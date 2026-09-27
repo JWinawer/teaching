@@ -29,7 +29,6 @@ items = {
     "bandwidth",    "number",   "Receiver bandwidth, total (kHz)",           []
     "echoTime",     "number",   "Echo time, TE (ms): time to k-space centre", []
     "t2star",       "number",   "T2* of tissue (ms, Inf = no decay)",        []
-    "oversample",   "number",   "Spiral shots",                              []
     };
 
 % The dialog can only show text and scalar values

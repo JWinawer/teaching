@@ -34,7 +34,6 @@ function params = kspaceDefaultParams()
 %                  simulated pixel. Inf means no decay. May be a matrix the size
 %                  of the image (scripts only). Field errors from noiseType are
 %                  simulated separately and add further dephasing on top.
-%   oversample   - Number of spiral shots (spiral only).
 %   B0           - Main field strength, tesla.
 %   showProgress - true to redraw the plots as k-space fills (slower).
 %   loop         - kspaceDemo only: true to reopen the dialog after each run.
@@ -58,7 +57,6 @@ params.imRes        = 1;     % mm
 params.bandwidth    = 125;   % kHz
 params.echoTime     = 40;    % ms
 params.t2star       = Inf;   % ms
-params.oversample   = 1;     % spiral shots
 params.B0           = 3;     % tesla
 params.showProgress = false;
 params.loop         = true;

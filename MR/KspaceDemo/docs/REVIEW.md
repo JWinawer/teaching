@@ -11,8 +11,8 @@ Fixed since this review was written. Each fix was checked by a test in MATLAB.
 
 | Item | What changed | Check |
 |---|---|---|
-| A1, A2 | Spiral weighting is now \|k\| with no post-compensation; gradient sign fixed; spiral k-space rescaled to match EPI | Spiral correlation 0.71 → 0.95 (2 shots: 0.98) |
-| A3 | Each spiral shot now restarts from the excitation | Part of the 2-shot test |
+| A1, A2 | Spiral weighting is now \|k\| with no post-compensation; gradient sign fixed; spiral k-space rescaled to match EPI | Spiral correlation 0.71 → 0.95 |
+| A3 | Multi-shot option removed. It had been added to improve the spiral image, and fix A1 made it unnecessary. | Tests pass without it |
 | A4 | `echoTime` is now the true TE: the readout is placed so the centre of k-space is sampled at TE. Too short a TE gives an error stating the minimum. Default TE is now 40 ms, because 30 ms is below the EPI minimum (33 ms). | Centre sampled at 40.000 ms for EPI and spiral |
 | A5 | New `t2star` parameter (scalar or map) | Centre sample shrinks by 0.4493; exp(-40/50) = 0.4493 |
 | A6 | All labels fixed; plots rebuilt (see README) | Figures inspected |
@@ -20,8 +20,7 @@ Fixed since this review was written. Each fix was checked by a test in MATLAB.
 | Speed | EPI reconstruction places samples directly (no `griddata`). The progress display redraws once per EPI line and updates existing plots instead of adding new ones. | Progress mode: about 2 s for EPI (was an estimated 11+ minutes) |
 
 Still open: the spiral image keeps a faint circular shading near the edges,
-and multi-shot spirals are full spirals rather than true interleaves. The
-separable speed-up for spiral steps (see Speed) is not done.
+and the separable speed-up for spiral steps (see Speed) is not done.
 
 The rest of this document is the review as first written.
 
@@ -212,4 +211,4 @@ rotation". I would not replace it with an FFT.
    any assignment.
 4. A4 (true TE) and A5 (T2* decay).
 5. Speed up the point-by-point display.
-6. A3 (multi-shot spirals), if multi-shot is worth teaching.
+6. A3 (multi-shot spirals), if multi-shot is worth teaching. (Done: removed.)

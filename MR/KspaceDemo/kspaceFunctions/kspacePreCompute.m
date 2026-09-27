@@ -6,7 +6,6 @@ function spins = kspacePreCompute(sim, gradients, xygrid, b0noise)
 %
 % Outputs
 %   spins.total      - spin state after the wait before the readout
-%   spins.afterDelay - a copy of that state, used to restart each new shot
 %   spins.precompute, spins.precomputeIndex - the distinct steps, and which
 %                      one each sample uses. Only set if there are 20 or fewer
 %                      distinct steps (true for EPI), since otherwise
@@ -16,8 +15,7 @@ function spins = kspacePreCompute(sim, gradients, xygrid, b0noise)
 
 % Effect of the wait between excitation and the start of the readout
 spins = kspaceComputeOnePoint(sim, gradients, xygrid, b0noise, [], 0);
-spins.total      = spins.step;
-spins.afterDelay = spins.step;
+spins.total = spins.step;
 
 % Find the distinct steps. For EPI there are only a handful.
 [b, m, n] = unique([gradients.y' gradients.x' gradients.T'], "rows");
