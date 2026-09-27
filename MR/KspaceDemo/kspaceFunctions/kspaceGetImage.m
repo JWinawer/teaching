@@ -1,38 +1,43 @@
-function im = kspaceGetImage(k)
+function im = kspaceGetImage(sim)
+% Load the object to be scanned, as a grayscale image on the simulation grid.
 %
+%   im = kspaceGetImage(sim)
 %
+% sim.imfile may be a file name, "other" (pick a file), or a numeric matrix.
+% The image is resized to sim.imFreq x sim.imFreq pixels.
+%
+% Outputs
+%   im.orig     - the image, double
+%   im.vector   - the same, as a row vector, for dot products
+%   im.fft      - its 2D Fourier transform
+%   im.fftshift - log magnitude of the Fourier transform, centred, for display
 %
 % JW, Vistasoft, 2009
 
-imfile = k.imfile;
-sz     = k.imFreq; % this is the number of pixels along one side of the image (assumed to be square)
+sz = sim.imFreq;   % pixels along one side of the (square) image
 
-% if not a default image, let user select it from prompt
-if strcmpi(imfile, 'other')
-    while ~exist('fname', 'var') || isequal(fname,0) %#ok<NODEF>
-        [fname,pth] = uigetfile('*.*', 'Pick any image');
+if isnumeric(sim.imfile) || islogical(sim.imfile)
+    img = sim.imfile;
+else
+    imfile = sim.imfile;
+    if strcmpi(imfile, "other")
+        [fname, pth] = uigetfile("*.*", "Pick any image");
+        if isequal(fname, 0)
+            error("kspace:noImage", "No image was selected. Pick an image file, or choose one of the listed images.");
+        end
+        imfile = fullfile(pth, fname);
     end
-     imfile = fullfile(pth, fname);
+    img = imread(imfile);
 end
 
-% get the image
-im.orig     = imread(imfile);
+% Make sure it is grayscale
+if ~ismatrix(img)
+    img = rgb2gray(img);
+end
 
-% make sure it is gray scale
-if length(size(im.orig)) > 2, im.orig = rgb2gray(im.orig); end
-
-% rescale to desired resolution
-im.orig     = imresize(im.orig, [sz, sz]);
-
-% it will be convenient to have the image defined as a double column vector
-%   for calculating dot products
-im.vector   = double(im.orig(:))';
-
-% calculate fft now and store it, so we don't have to do this again
+im.orig     = double(imresize(img, [sz, sz]));
+im.vector   = im.orig(:)';
 im.fft      = fft2(im.orig);
-
-% this is a nice way to view the fft of the image. calculate it once now
-% so we don't have to do it again.
-im.fftshift = fftshift(log(abs(im.fft)));
+im.fftshift = fftshift(log(abs(im.fft) + eps));
 
 end

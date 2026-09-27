@@ -1,40 +1,48 @@
-function gradients = kspaceEPI(params)
-% Generate EPI gradients sequence
+function [gx, gy, T, shotStart] = kspaceEPI(sim)
+% Generate an EPI gradient sequence
 %
-% [gradients, kspace] = kspaceEPI(params)
+%   [gx, gy, T, shotStart] = kspaceEPI(sim)
+%
+% EPI works in a kind of zigzag. We start at one corner of k-space, move
+% across a row in the readout (frequency encode) direction, step to the next
+% row in the phase encode direction, move back across in the opposite
+% direction, and so on. So the phase encode gradient blips once per row, and
+% the readout gradient alternates + / - one row at a time.
+%
+% Here the readout runs along y (image rows, vertical in the plots) and phase
+% encoding runs along x (image columns, horizontal). Field errors therefore
+% shift and stretch the image mostly horizontally, because the phase encode
+% direction has a far lower bandwidth per pixel.
+%
+% Outputs are k-space steps per sample (cycles per metre) and the duration of
+% each step (in dwell times). shotStart is all false, because this is a
+% single-shot sequence. See kspaceMakePulseSequence.
 
-% EPI works in a kind of zigzag
-% We start at the upper left corner of kspace, move positively in the freq
-% encode direction, then bump down a row in the phase direction, then move
-% negatively across the fr encode direction, etc.
-% So we want to make the ph encode gradient blip once per row, and we want
-% the freq encode gradient to alternate + / - for a row at a time.
+freq     = sim.freq;
+nsamples = freq^2;   % one sample per reconstructed pixel
+dk       = 1/sim.FOV; % k-space step between samples, cycles per metre
 
-%% Initialize variables
-freq     = params.freq;
-nsamples = freq^2; % the number of points we will acquire is the square of the resolution
-kx       = 1/params.FOV;
+T  = ones(1, nsamples);
+gx = zeros(1, nsamples);   % phase encode
+gy = zeros(1, nsamples);   % readout
+shotStart = false(1, nsamples);
 
-gradients.T = ones(1, nsamples);
-gradients.x = gradients.T*0; % ph encode
-gradients.y = gradients.T*0; % fr encode
-
-%% Frequency encode (y gradient) 
+% Readout (y gradient): + on odd rows, - on even rows
 for row = 1:2:freq
-    inds = 1 + (row-1) * freq : freq + (row-1) * freq;
-    gradients.y(inds) = kx;
-    gradients.y(inds+freq) = -kx;
+    inds = (1:freq) + (row-1)*freq;
+    gy(inds)      = dk;
+    gy(inds+freq) = -dk;
 end
 
-%% x Phase encode (x gradient)
-gradients.x(freq+1:freq:end-freq+1) = kx;  % ph encode blips
-gradients.y(freq+1:freq:end-freq+1) = 0;  % shut off fr gradient during ph blips
+% Phase encode (x gradient): one blip at the start of each new row, with the
+% readout gradient off during the blip
+blips     = freq+1:freq:nsamples-freq+1;
+gx(blips) = dk;
+gy(blips) = 0;
 
-%% Initial point (move to upper left of k space)
-gradients.x(1) = -kx;
-gradients.y(1) = -kx;
-gradients.T(1) = freq/2;
+% First step moves to the corner of k-space. It takes half a row.
+gx(1) = -dk;
+gy(1) = -dk;
+T(1)  = freq/2;
 
-%%
-return
-
+end

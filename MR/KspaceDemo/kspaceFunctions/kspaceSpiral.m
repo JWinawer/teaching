@@ -1,65 +1,70 @@
-function  gradients = kspaceSpiral(params)
-% Generate spiral-out gradient sequence
+function [gx, gy, T, shotStart] = kspaceSpiral(sim)
+% Generate a spiral-out gradient sequence
 %
-% See McRobbie et al (MRI from physics to protons), 2nd edition, p 370, box
+%   [gx, gy, T, shotStart] = kspaceSpiral(sim)
 %
-% This is an Archmidean spiral, meaning
+% See McRobbie et al (MRI from picture to proton), 2nd edition, p 370, box.
+%
+% This is an Archimedean spiral, meaning
 %   A = c*theta
-% where A is the distance from the center of k-space, theta is the angle
+% where A is the distance from the centre of k-space, theta is the angle
 % (which keeps increasing beyond 2*pi as the spiral wraps around), and c is
 % a constant. In kx,ky space:
 %
-%   kx = 1/(2pi * FOV) * theta * sin(theta)
-%   ky = 1/(2pi * FOV) * theta * cos(theta)
+%   kx = 1/(2*pi*FOV) * theta * sin(theta)
+%   ky = 1/(2*pi*FOV) * theta * cos(theta)
 %
-% The gradient strengths are the derivatives of the k-space
-% position with respect to time. they are
+% With c = 1/(2*pi*FOV), successive turns are 1/FOV apart, which is the
+% spacing needed to avoid wraparound. The gradients are the derivatives of the
+% k-space position with respect to theta (times dtheta per sample):
 %
-% Gx = 1/(gamma*FOV) * dtheta/dt * (sin(theta) + theta*cos(theta))
-% Gy = 1/(gamma*FOV) * dtheta/dt * (cos(theta) + theta*sin(theta))
+%   Gx = 1/(2*pi*FOV) * dtheta * (sin(theta) + theta*cos(theta))
+%   Gy = 1/(2*pi*FOV) * dtheta * (cos(theta) - theta*sin(theta))
 %
-% Here we will ignore gamma and dt, since they are included in our stored
-% constant gx, which will be added back later: gx = 2*pi/(gamma*dt)
+% Theta increases at a constant rate, so the spiral is traced at a constant
+% angular speed. Samples are therefore dense near the centre of k-space and
+% sparse at the edge. kspaceRecon corrects for this.
+%
+% Outputs are k-space steps per sample (cycles per metre) and the duration of
+% each step (in dwell times). shotStart is true for the first sample of each
+% shot after the first. See kspaceMakePulseSequence.
+%
+% The number of samples per shot is the number of reconstructed pixels. Each
+% extra shot (sim.oversample > 1) is another full spiral, rotated, so extra
+% shots add sampling density. They do not split the spiral into interleaves.
+% Each shot is a new excitation: kspaceSimulate resets the spins to their
+% state at the start of the first shot, so field-error phase and T2* decay
+% start again from the same point.
 
+nsamples    = sim.freq^2;
+noversample = sim.oversample;
+c           = 1/(2*pi*sim.FOV);
 
-%% Initialize variables
-% The number of kspace samples we will collect is approximately the the
-% number of pixels in the reconned image, i.e., xfreq * yfreq. This
-% relationship is exact for EPI, though need not be so for spiral, since we
-% are interpolating anyway when we do our gridding. Noversamples is the
-% number of extra sprial shots we do. Oversampling helps avoid aliasing
-% problems in sampling kspace.
+T  = ones(1, nsamples*noversample);
+gx = zeros(1, nsamples*noversample);
+gy = zeros(1, nsamples*noversample);
+shotStart = false(1, nsamples*noversample);
 
-nsamples    = params.freq^2;
-noversample = params.oversample;
-FOV         = params.FOV;
+theta  = linspace(0, sim.freq*pi, nsamples);
+dtheta = theta(2) - theta(1);
 
-gradients.T =   ones(1, nsamples * noversample);
-gradients.x =  zeros(1, nsamples * noversample);
-gradients.y =  zeros(1, nsamples * noversample);
+for ii = 0:noversample-1
+    inds   = (1:nsamples) + ii*nsamples;
+    offset = ii/noversample*2*pi; % angular offset for each shot
+    gx(inds) = c*dtheta*(sin(theta+offset) + theta.*cos(theta+offset));
+    gy(inds) = c*dtheta*(cos(theta+offset) - theta.*sin(theta+offset));
 
-
-for ii = 0: noversample-1
-    % Define theta
-    theta  = linspace(0, params.freq*pi, nsamples);
-    dtheta = mode(diff(theta));
-
-    % gradients.x (phase encode)
-    inds = (1:nsamples) + ii*nsamples;
-    offset = ii/noversample*2*pi; % angular offset for interleaves
-    gradients.x(inds) = dtheta / (2*pi * FOV) * (sin(theta+offset) + theta.*cos(theta+offset));
-    gradients.y(inds) = dtheta / (2*pi * FOV) * (cos(theta+offset) + theta.*sin(theta+offset));
-
-    %return to center of kspace if we are doing multiple interleaves
-    if ii
-        previousinds = 1:inds(1)-1;
-        xpos = gradients.x(previousinds) * gradients.T(previousinds)';
-        ypos = gradients.y(previousinds) * gradients.T(previousinds)'; 
-        gradients.x(inds(1)) = -xpos / length(previousinds);
-        gradients.y(inds(1)) = -ypos / length(previousinds);
-        gradients.T(inds(1)) = length(previousinds);
+    % Return to the centre of k-space before each extra shot. This step sets
+    % the k-space positions. The spins themselves are reset by kspaceSimulate.
+    if ii > 0
+        previousInds = 1:inds(1)-1;
+        xpos = gx(previousInds)*T(previousInds)';
+        ypos = gy(previousInds)*T(previousInds)';
+        gx(inds(1)) = -xpos/length(previousInds);
+        gy(inds(1)) = -ypos/length(previousInds);
+        T(inds(1))  = length(previousInds);
+        shotStart(inds(1)) = true;
     end
 end
 
-%%
-return
+end

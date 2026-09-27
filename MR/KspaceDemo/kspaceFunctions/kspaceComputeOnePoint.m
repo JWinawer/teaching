@@ -1,75 +1,77 @@
-function spins = kspaceComputeOnePoint(params, gradients, xygrid, b0noise, spins, t)
-% Calculate the spin phase at each discrete image location 
-%       from the gradients and b0 inhomogeneities
+function spins = kspaceComputeOnePoint(sim, gradients, xygrid, b0noise, spins, t)
+% Calculate the change in each spin over one step of the sequence.
 %
-% Syntax
-%   step = kspaceComputeOnePoint(params, GX, GY, T);
+%   spins = kspaceComputeOnePoint(sim, gradients, xygrid, b0noise, spins, t)
 %
 % Description
+%   Each simulated pixel is treated as one spin with a complex value. Over
+%   each step, the spin is multiplied by a small complex factor, spins.step,
+%   which has two parts:
+%     - a rotation (phase change) from the gradients and from any B0 field
+%       error at that location
+%     - a shrinkage from T2* decay, if sim.t2star is finite
+%   kspaceGetCurrentBasisFunctions then multiplies the running total by it.
 %
 % Inputs
+%   sim       - SI parameters (kspaceDerivedParams)
+%   gradients - from kspaceMakePulseSequence
+%   xygrid    - pixel positions, metres (kspaceGrid)
+%   b0noise   - B0 field error at each pixel, tesla (kspaceGetB0Noise)
+%   spins     - spin state. If spins.precompute exists, the step is looked
+%               up instead of computed.
+%   t         - sample number. t = 0 means the wait between excitation and
+%               the start of the readout, when the gradients are off.
 %
 % Outputs
+%   spins     - with spins.step set for this step
 %
 % Winawer, Vistasoft, 2009
-%
-% See also
 
-% Check to see whether we pre-computed the spin state. If so, grab it and
-% move on.
-if isfield(spins, 'precompute')
+% If the step was precomputed, look it up
+if isfield(spins, "precompute")
     spins.step = spins.precompute(:,:,spins.precomputeIndex(t));
     return
 end
 
-%% ***************************
-% Define Variables
-% ***************************
+gamma = sim.gamma;   % gyromagnetic ratio of hydrogen, rad/s/T
+dt    = sim.dt;      % dwell time, s
+gx    = sim.gx;      % gradient per unit k-space step, T/m
+gy    = sim.gy;
 
-% Constants (these don't change - we define them here to make our equations
-%               look nicer)
-gamma = params.gamma;   % gyromagnetic constant for hydrogen
-dt    = params.dt;      % time for discrete step in k-space sampling
+x = xygrid.x;        % pixel positions in metres, starting from 0,0
+y = xygrid.y;        % (upper left)
 
-gx    = params.gx;      % gradient constants in units of Tesla / meter
-gy    = params.gy;      %
-
-x     = xygrid.x;       % spatial locations in image in meters,
-y     = xygrid.y;       % starting from 0,0 (upper left)
-
-% gradients (these change over time)
-if t == 0  % then this is the effect of waiting TE (echo time), which means
-    % the gradients have not yet been on, and the only effect we
-    % should see is depahsing due to B0 noise, if any
+if t == 0
+    % The wait before the readout: gradients off, so the only effects are
+    % dephasing from B0 field errors and T2* decay
     GX = 0;
     GY = 0;
-    T  = params.echoTime / dt;
-else       % in this case our gradients are moving and we are getting images!
-    GX    = gradients.x(t); % gradient scalars over time (e.g., +1, 0, -1 for EPI)
-    GY    = gradients.y(t);
-    
-    T     = gradients.T(t); % number of dt's between samples (usually 1)
+    T  = gradients.delay;
+else
+    GX = gradients.x(t);   % k-space step for this sample, cycles/m
+    GY = gradients.y(t);
+    T  = gradients.T(t);   % number of dwell times in this step (usually 1)
+end
+duration = T*dt;
+
+% Phase change from the gradients
+step = exp(-1i*gamma*x*gx*GX*duration) .* exp(-1i*gamma*y*gy*GY*duration);
+
+% Phase change from B0 field errors. Skipped when there are none, to save time.
+if sim.noiseType ~= "none"
+    step = step .* exp(-1i*gamma*b0noise*duration);
 end
 
-%% ***************************
-% Compute one step
-% ***************************
-step.x = exp(-1i*gamma*x*gx*GX*dt*T); % spin change due to x-gradient
-step.y = exp(-1i*gamma*y*gy*GY*dt*T); % spin change due to y-gradient
-
-if strcmpi(params.noiseType, 'none') % don't calculate noise if there is none - this just takes time
-    step = step.x .* step.y;              % total spin change
-else
-    step.e = exp(-1i*T*dt*b0noise*gamma); % spin change due to b0 error
-    step = step.x .* step.y .* step.e;    % total spin change
+% T2* decay. sim.t2star may be a scalar or a map the size of the image.
+if any(isfinite(sim.t2star(:)))
+    step = step .* exp(-duration./sim.t2star);
 end
 
 spins.step = step;
 
-% The total spin change should include the term
-%           exp(-1i*gamma * B0 * dt * T)
-% So we would have
-%       step = step.x .* step.y .* step.e .* exp(-1i*gamma * B0 * dt * T)
-% But we drop this term due to demodulation at aquisition. (Lauterber book)
+% The total spin change should also include the term
+%       exp(-1i*gamma*B0*duration)
+% for precession in the main field. We drop it because the scanner removes
+% it when it demodulates the signal (Lauterbur book).
 
 end

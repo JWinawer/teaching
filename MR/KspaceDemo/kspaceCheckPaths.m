@@ -1,10 +1,14 @@
-function kspaceCheckPaths
-%  kspaceCheckPaths
+function kspaceCheckPaths()
+% Add the demo's subfolders to the MATLAB path, if they are not there yet.
 %
-% Check to see that necessary subroutines are on our matlab path. This
-% function has no inputs or outputs. It modifies the current paths.
+%   kspaceCheckPaths()
 
-if ~exist('kspaceParamsGUI.m', 'file'), 
-    pth = fileparts(which(mfilename));
-    addpath(fullfile(pth, 'kspaceFunctions')); 
+demoFolder = fileparts(mfilename("fullpath"));
+if ~exist("kspaceParamsGUI.m", "file")
+    addpath(fullfile(demoFolder, "kspaceFunctions"));
+end
+if ~exist("generalDialog.m", "file")
+    addpath(fullfile(demoFolder, "mrVistaUtilities"));
+end
+
 end

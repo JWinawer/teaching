@@ -1,4 +1,4 @@
-function kspace = kspaceInitializeMatrices(params, gradients)
+function kspace = kspaceInitializeMatrices(sim, gradients)
 % Initialize kspace
 %
 % Our kspace structure has two parts, a vector and a grid (square matrix).
@@ -30,11 +30,11 @@ kspace.vector.imag = zeros(1, length(T));
 
 %% Grids
 % Define the xy indices by the spatial frequencies 
-nsamples    = params.freq;
-freqs       = linspace(-.5,.5,nsamples+1) * 1/params.res;
+nsamples    = sim.freq;
+freqs       = linspace(-.5,.5,nsamples+1) * 1/sim.res;
 freqs       = freqs(1:end-1);
 
-[kspace.grid.x kspace.grid.y]   = meshgrid(freqs, freqs);
+[kspace.grid.x, kspace.grid.y]   = meshgrid(freqs, freqs);
 kspace.grid.x                   = fftshift(kspace.grid.x);
 kspace.grid.y                   = fftshift(kspace.grid.y);
 

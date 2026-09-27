@@ -1,70 +1,68 @@
-function kspace = kspaceRecon(kspace, params)
-% kspace = kspaceRecon(kspace, params)
+function kspace = kspaceRecon(kspace, sim)
+% Put the k-space samples onto a Cartesian grid, ready for an inverse FFT.
 %
-% Take sequence of kspace measures and put them on a grid.
-sequenceType = params.sequenceType;
+%   kspace = kspaceRecon(kspace, sim)
+%
+% EPI samples already lie on the grid, so they are simply placed there.
+%
+% Spiral samples do not, so they are interpolated onto the grid with a
+% Kaiser-Bessel kernel ("gridding"; Jackson et al., 1991, IEEE Trans Med
+% Imaging 10:473-478). Before gridding, each sample is weighted to correct
+% for uneven sampling density. The spiral in kspaceSpiral is traced at a
+% constant angular speed, so the number of samples per unit area of k-space
+% falls off as 1/|k|. Weighting each sample by |k| evens this out.
+%
+% Outputs are kspace.grid.real and kspace.grid.imag, with the centre of
+% k-space at (1,1), as ifft2 expects.
 
 v = kspace.vector;
-g = kspace.grid;
 
-%method = 'griddata';
-method = 'voronoi';
+switch lower(sim.sequenceType)
+    case "epi"
+        % Each sample is at a whole number of steps of 1/FOV from the centre.
+        % Convert its position to a row and column of the centred grid, then
+        % move the centre to (1,1) to match kspace.grid.
+        n    = sim.freq;
+        cols = round(v.x*sim.FOV) + n/2 + 1;
+        rows = round(v.y*sim.FOV) + n/2 + 1;
+        kr   = fftshift(accumarray([rows(:) cols(:)], v.real(:), [n n]));
+        ki   = fftshift(accumarray([rows(:) cols(:)], v.imag(:), [n n]));
 
-switch lower(sequenceType)
-    case 'epi'
-        kr = griddata(v.x, v.y, v.real, g.x, g.y);
-        ki = griddata(v.x, v.y, v.imag, g.x, g.y);
+    case "spiral"
+        data   = 1i*v.real + v.imag;           % k-space data
+        kmax   = sim.freq/sim.FOV*0.5;          % highest spatial frequency, cycles/m
+        kTraj  = (-1i*v.x + v.y)/(kmax*2);      % trajectory, scaled to [-0.5 0.5]
+        [~, r] = cart2pol(v.x, v.y);
+        w      = r;                            % density compensation (see help)
 
-    case 'spiral'
-        switch lower(method)
-            case 'griddata'
+        n              = sim.freq;             % pixels per side of the reconstructed image
+        oversample     = 2;                    % grid oversampling
+        kbwidth        = 2.5;                  % full width of the Kaiser-Bessel kernel
+        kbbeta         = (oversample-0.5)*pi*kbwidth;  % kernel shape parameter
+        trimming       = 'y';
+        apodize        = 'y';
+        postcompensate = 'n';                  % 'y' would undo the density weighting
 
-                % Ignore measurements beyond our resolution (k > kmax)
-                kmax           = params.freq / params.FOV*.5;  % cycles / meter
-                inds = abs(v.x) <= kmax & abs(v.y) <= kmax;
-                
-                % Now recon
-                kr = griddata(v.x(inds), v.y(inds), v.real(inds), g.x, g.y, 'cubic', {'Qt', 'Qbb','Qc', 'Qs', 'Qz'});
-                ki = griddata(v.x(inds), v.y(inds), v.imag(inds), g.x, g.y, 'cubic', {'Qt', 'Qbb','Qc', 'Qs', 'Qz'});
+        k  = grid_kb(data', kTraj', w', n, oversample, kbwidth, kbbeta, trimming, apodize, postcompensate);
+        k  = fftshift(k);
 
-            case 'voronoi'
-                % Reconstruct using Voronoi weighting function (code from
-                % Atsushi)
-                data           = 1i*v.real + v.imag;           % k-space data
-                kmax           = params.freq / params.FOV*.5;  % cycles / meter, highest resolution
-                k              = (-1i*v.x+v.y)/(kmax*2);       % k-space trajectories, scaled to [-.5 .5]
-                [th, r]        = cart2pol(v.x, v.y);           % convert k-space trajectory to polar coordinates
-                w              = r.^0.5;                       % weighting of k-space data - don't understand this.
-                                                               %  but in atsushi test data, seems to be weighted by
-                                                               %  about the sqrt of r in kspace trajectory
-                %n = round(.1*length(r)); w(1:n) = w(1:n)/2;%
-                %w              = ones(size(w));
-                n              = params.freq;                  % number of pixels in width (or length) of reconned image
-                oversample     = 2;                            % oversampling of kspace (output image will be a*a, where a = oversample * n)
-                kbwidth        = 2.5;                          % FULL width of Kaiser-Bessel Kernel (Atsushi: 2.5)
-                kbbeta         = (oversample-0.5)*pi*kbwidth;  % Shape parameter (Beta) of KB kernel
-                trimming       =  'y';                         %
-                apodize        =  'y';                         %
-                postcompensate =  'y';                         % 
-
-                k = grid_kb(data',k',w', n,oversample,kbwidth,kbbeta,trimming, apodize, postcompensate);
-                k = fftshift(k);
-
-                kr = real(k);
-                ki = imag(k);
+        % Gridding leaves an arbitrary overall scale. Rescale so that the
+        % centre of the grid matches the measured sample nearest the centre,
+        % which puts spiral and EPI k-space and images on the same scale.
+        [~, nearest] = min(r);
+        measured = complex(v.real(nearest), v.imag(nearest));
+        if abs(k(1,1)) > 0
+            k = k*abs(measured)/abs(k(1,1));
         end
+        kr = real(k);
+        ki = imag(k);
+
+    otherwise
+        error("kspace:unknownSequence", ...
+            "Unknown sequence type ""%s"". Use ""epi"" or ""spiral"".", sim.sequenceType);
 end
 
-% get rid of annoying nan's (where do they come from anyway?)
-kr(isnan(kr) | abs(kr) < 1e-15) = 0;
-ki(isnan(ki) | abs(ki) < 1e-15) = 0;
-
-% put data back into properly named structs for output
 kspace.grid.real = kr;
 kspace.grid.imag = ki;
 
-%find(kspace.vector.real ~= 0)'
-return
-
-kr = griddata(v.x, v.y, v.real, g.x, g.y, 'linear', {'Qt', 'Qbb','Qc', 'Qs', 'Qz'});
-ki = griddata(v.x, v.y, v.imag, g.x, g.y, 'linear', {'Qt', 'Qbb','Qc', 'Qs', 'Qz'});
+end
