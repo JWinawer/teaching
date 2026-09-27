@@ -34,7 +34,7 @@ h.recon.CData = result.recon;
 
 % Spin pattern
 h.spins.CData = real(result.spins.total);
-h.spinsTitle.String = sprintf("Spins now (real part), k = (%.0f, %.0f) cycles/m", ...
+h.spinsSubtitle.String = sprintf("k = (%.0f, %.0f) cycles/m", ...
     kspace.vector.x(t), kspace.vector.y(t));
 
 % Current time on the gradient plot
@@ -69,7 +69,8 @@ objectExtent = [0 sim.imSize*mmPerM];
 imagesc(ax, objectExtent, objectExtent, im.orig);
 axis(ax, "image");
 colormap(ax, gray);
-title(ax, sprintf("Object (%g mm pixels)", sim.imRes*mmPerM));
+title(ax, "Object");
+subtitle(ax, sprintf("%g mm pixels", sim.imRes*mmPerM));
 xlabel(ax, "x (mm)");
 ylabel(ax, "y (mm)");
 
@@ -87,7 +88,8 @@ if sim.sequenceType == "spiral"
 else
     plot(ax, kmax*[-1 1 1 -1 -1], kmax*[-1 -1 1 1 -1], "r-", LineWidth=1.5);
 end
-title(ax, "k-space of object (red: region measured)");
+title(ax, "k-space of object");
+subtitle(ax, "Red: region measured");
 xlabel(ax, "k_x (cycles/m)");
 ylabel(ax, "k_y (cycles/m)");
 
@@ -100,7 +102,8 @@ imagesc(ax, objectExtent, objectExtent, b0Hz, cLimits);
 axis(ax, "image");
 colormap(ax, parula);
 colorbar(ax);
-title(ax, sprintf("B0 field error (Hz), range [%.1f, %.1f]", range));
+title(ax, "B0 field error (Hz)");
+subtitle(ax, sprintf("Range %.1f to %.1f Hz", range));
 xlabel(ax, "x (mm)");
 ylabel(ax, "y (mm)");
 
@@ -110,9 +113,11 @@ reconExtent = [0 sim.FOV*mmPerM];
 h.recon = imagesc(ax, reconExtent, reconExtent, zeros(sim.freq));
 axis(ax, "image");
 colormap(ax, gray);
-title(ax, sprintf("Reconstructed image (%g mm pixels)", sim.res*mmPerM));
+title(ax, "Reconstructed image");
 if sim.sequenceType == "epi"
-    subtitle(ax, "Readout: vertical. Phase encode: horizontal.");
+    subtitle(ax, [sprintf("%g mm pixels", sim.res*mmPerM); "Readout vertical, phase encode horizontal"]);
+else
+    subtitle(ax, sprintf("%g mm pixels", sim.res*mmPerM));
 end
 xlabel(ax, "x (mm)");
 ylabel(ax, "y (mm)");
@@ -125,7 +130,8 @@ axis(ax, "image");
 colormap(ax, gray);
 hold(ax, "on");
 h.kmarker = plot(ax, 0, 0, "r+", MarkerSize=10, LineWidth=1.5);
-title(ax, sprintf("k-space measured (TE = %g ms)", sim.echoTime*1e3));
+title(ax, "k-space measured");
+subtitle(ax, sprintf("TE = %g ms", sim.echoTime*1e3));
 xlabel(ax, "k_x (cycles/m)");
 ylabel(ax, "k_y (cycles/m)");
 
@@ -134,7 +140,8 @@ ax = nexttile(layout, 6);
 h.spins = imagesc(ax, objectExtent, objectExtent, zeros(sim.imFreq), [-1 1]);
 axis(ax, "image");
 colormap(ax, gray);
-h.spinsTitle = title(ax, "Spins now (real part)");
+title(ax, "Spins now (real part)");
+h.spinsSubtitle = subtitle(ax, "k = (0, 0) cycles/m");
 xlabel(ax, "x (mm)");
 ylabel(ax, "y (mm)");
 
@@ -155,7 +162,8 @@ end
 xline(ax, sim.echoTime*msPerS, "k--", "TE", HandleVisibility="off");
 h.now = xline(ax, tEdges(1), "g-", LineWidth=1.5, HandleVisibility="off");
 xlim(ax, [0 tEdges(end)]);
-title(ax, "Gradients (excitation at time 0)");
+title(ax, "Gradients");
+subtitle(ax, "Excitation at time 0");
 xlabel(ax, "time (ms)");
 ylabel(ax, "gradient (mT/m)");
 
