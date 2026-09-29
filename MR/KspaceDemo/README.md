@@ -88,8 +88,16 @@ See `kspaceDefaultParams` for the full list and units. A few to know about:
 - **Bottom row:** the gradient waveforms, in mT/m, against time since
   excitation. The dashed line marks TE.
 
-Tick "Show recon as k-space fills" in the dialog, or set
-`params.showProgress = true` with a figure, to watch k-space fill.
+To watch k-space fill, choose "Show recon as k-space fills" in the dialog, or
+set `params.progressDisplay` and pass a figure. The choices are `"final"`
+(only the end result, the default), `"line"` (once per EPI line, a few
+seconds) and `"point"` (after every sample). `"point"` draws every step, so a
+full scan takes minutes; it is best for watching the first few lines, and you
+can close the figure to stop it.
+With a spiral, `"point"` still updates the spin pattern after every sample, but
+rebuilds the image only once per turn of the spiral, since each rebuild takes
+about 0.2 s. While k-space fills, a green line marks the current time on the
+gradient plot.
 
 ## Movies
 

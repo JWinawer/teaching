@@ -74,7 +74,7 @@ sim.t2star             = t2star;
 sim.B0                 = params.B0;
 sim.gamma              = gamma;
 sim.gradientPerStep    = gradientPerStep;
-sim.showProgress       = params.showProgress;
+sim.progressDisplay    = lower(string(params.progressDisplay));
 
 end
 
@@ -87,7 +87,7 @@ defaults = kspaceDefaultParams();
 % name is.
 oldNames = struct("imfile", "imageFile", "noiseType", "fieldErrorType", ...
     "noiseScale", "fieldErrorPpm", "res", "pixelSize", "imSize", "objectSize", ...
-    "imRes", "objectPixelSize", "loop", "keepDialogOpen");
+    "imRes", "objectPixelSize", "loop", "keepDialogOpen", "showProgress", "progressDisplay");
 
 given   = string(fieldnames(params))';
 unknown = setdiff(given, string(fieldnames(defaults))');
@@ -100,6 +100,11 @@ if ~isempty(unknown)
     end
     error("kspace:unknownParameter", "Unknown parameter: %s. See kspaceDefaultParams for the list.", ...
         join(unknown + hints, ", "));
+end
+
+progressChoices = ["final", "line", "point"];
+if isfield(params, "progressDisplay") && ~ismember(lower(string(params.progressDisplay)), progressChoices)
+    error("kspace:unknownProgressDisplay", "progressDisplay must be one of: %s.", join(progressChoices, ", "));
 end
 
 missing = setdiff(string(fieldnames(defaults))', given);

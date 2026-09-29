@@ -46,7 +46,12 @@ function params = kspaceDefaultParams()
 %                     for "map", which is already in real units.
 %
 % Display
-%   showProgress    - true to redraw the plots as k-space fills (slower).
+%   progressDisplay - How often to redraw the plots while k-space fills:
+%                     "final" (only the end result), "line" (once per EPI
+%                     line, a few seconds) or "point" (after every sample,
+%                     so every step is shown; this takes minutes). With a
+%                     spiral, "point" updates the image once per turn of the
+%                     spiral.
 %   keepDialogOpen  - kspaceDemo only: true to reopen the dialog after each
 %                     run.
 %
@@ -70,7 +75,7 @@ params.echoTime        = 40;     % ms
 params.B0              = 3;      % tesla
 params.fieldErrorType  = "local offset";
 params.fieldErrorPpm   = 0.5;    % ppm
-params.showProgress    = false;
+params.progressDisplay = "final";
 params.keepDialogOpen  = true;
 
 end

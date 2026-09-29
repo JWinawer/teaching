@@ -158,7 +158,7 @@ params = kspaceDefaultParams();
 [returned, ok] = kspaceParamsDialog(params, TestFcn=@editAndAccept);
 verifyTrue(testCase, ok);
 verifyEqual(testCase, returned.sequenceType, "spiral");
-verifyEqual(testCase, returned.showProgress, true);
+verifyEqual(testCase, returned.progressDisplay, "point");
 verifyEqual(testCase, returned.echoTime, 55);
 
 % Cancel returns ok = false and the settings unchanged
@@ -170,7 +170,7 @@ end
 function editAndAccept(dialog)
 % Change a drop-down, a checkbox and a number, then press OK
 setControl(dialog, "sequenceType", "spiral");
-setControl(dialog, "showProgress", true);
+setControl(dialog, "progressDisplay", "point");
 setControl(dialog, "echoTime", 55);
 press(dialog, "OK");
 end
@@ -197,10 +197,10 @@ function testPlotting(testCase)
 f = figure(Visible="off");
 testCase.addTeardown(@() close(f));
 params = testCase.TestData.params;
-params.showProgress = true;
+params.progressDisplay = "line";
 kspaceSimulate(params, Figure=f, ProgressInterval=4000);
 params.sequenceType = "spiral";
-params.showProgress = false;
+params.progressDisplay = "final";
 kspaceSimulate(params, Figure=f);
 handles = getappdata(f, "kspaceHandles");
 verifyTrue(testCase, isvalid(handles.recon));
@@ -219,4 +219,48 @@ verifyTrue(testCase, isfile(result.movieFile));
 % held for 1 s (5 frames)
 reader = VideoReader(result.movieFile);
 verifyEqual(testCase, reader.NumFrames, 4 + 5);
+end
+
+function testPointByPointDisplay(testCase)
+% Point mode redraws after every sample. For speed this test uses a small
+% image: 16 x 16 pixels, so 256 samples.
+f = figure(Visible="off");
+testCase.addTeardown(@() close(f));
+params = testCase.TestData.params;
+params.FOV             = 32;
+params.objectSize      = 32;
+params.pixelSize       = 2;
+params.echoTime        = 10;
+params.progressDisplay = "point";
+for sequence = ["epi", "spiral"]
+    params.sequenceType = sequence;
+    result = kspaceSimulate(params, Figure=f);
+    verifySize(testCase, result.recon, [16 16]);
+end
+end
+
+function testProgressDisplayChoices(testCase)
+params = testCase.TestData.params;
+params.progressDisplay = "sometimes";
+verifyError(testCase, @() kspaceDerivedParams(params), "kspace:unknownProgressDisplay");
+params = rmfield(testCase.TestData.params, "progressDisplay");
+params.showProgress = true;   % old name
+verifyError(testCase, @() kspaceDerivedParams(params), "kspace:unknownParameter");
+end
+
+function testClosingFigureStopsDrawing(testCase)
+% Closing the figure partway through a run stops the drawing but still
+% finishes the simulation
+f = figure(Visible="off");
+params = testCase.TestData.params;
+params.progressDisplay = "line";
+% Close the figure 1 s into the run, which takes several seconds
+closer = timer(StartDelay=1, TimerFcn=@(~, ~) close(f));
+testCase.addTeardown(@() delete(closer));
+start(closer);
+result = kspaceSimulate(params, Figure=f);
+verifyFalse(testCase, isvalid(f), "The figure was not closed during the run, so this test did not test anything");
+verifyEqual(testCase, result.t, numel(result.gradients.nDwells));
+verifyGreaterThan(testCase, corr(result.recon(:), ...
+    reshape(imresize(result.object.image, [90 90]), [], 1)), 0.98);
 end

@@ -1,11 +1,16 @@
-function kspaceShowPlots(f, result)
+function kspaceShowPlots(f, result, options)
 % Plot the object, its k-space, the measured k-space, and the reconstruction.
 %
 %   kspaceShowPlots(f, result)
+%   kspaceShowPlots(f, result, DrawEveryUpdate=true)
 %
 % f is a figure handle and result is the output of kspaceSimulate. The first
 % call for a new set of parameters builds the plots. Later calls (while
 % k-space fills) only update the data, which is much faster.
+%
+% By default the screen is redrawn at most about 20 times a second, and
+% updates in between are skipped, which keeps a long run fast. With
+% DrawEveryUpdate=true every update is drawn, so that no step is skipped.
 %
 % Panels
 %   Top row:    the object, its full k-space, and the B0 field error map
@@ -14,6 +19,12 @@ function kspaceShowPlots(f, result)
 %   Bottom row: the gradient waveforms against time since excitation
 %
 % See also kspaceSimulate
+
+arguments
+    f (1,1) matlab.ui.Figure
+    result (1,1) struct
+    options.DrawEveryUpdate (1,1) logical = false
+end
 
 sim       = result.sim;
 kspace    = result.kspace;
@@ -39,11 +50,16 @@ handles.spins.CData = real(result.spins.state);
 handles.spinsSubtitle.String = sprintf("k = (%.0f, %.0f) cycles/m", ...
     kspace.samples.kx(t), kspace.samples.ky(t));
 
-% Current time on the gradient plot
+% Current time on the gradient plot, shown only while k-space fills
 msPerS = 1e3;
 handles.now.Value = (gradients.delayDwells + sum(gradients.nDwells(1:t)))*sim.dt*msPerS;
+handles.now.Visible = result.t < numel(gradients.nDwells);
 
-drawnow limitrate
+if options.DrawEveryUpdate
+    drawnow
+else
+    drawnow limitrate
+end
 
 end
 
@@ -154,16 +170,20 @@ ax = nexttile(layout, 7, [1 3]);
 tEdges   = (gradients.delayDwells + [0 cumsum(gradients.nDwells)])*sim.dt*msPerS;
 gxmT     = gradients.dkx*sim.gradientPerStep*mTPerT;
 gymT     = gradients.dky*sim.gradientPerStep*mTPerT;
-stairs(ax, tEdges, [gxmT gxmT(end)], "r-", DisplayName="G_x (phase encode)");
-hold(ax, "on");
+% The readout is drawn first, so that the brief phase encode blips (one
+% sample each in EPI) are drawn on top of it rather than hidden behind it
 stairs(ax, tEdges, [gymT gymT(end)], "b-", DisplayName="G_y (readout)");
+hold(ax, "on");
+stairs(ax, tEdges, [gxmT gxmT(end)], "r-", LineWidth=1.5, DisplayName="G_x (phase encode)");
 if sim.sequenceType == "spiral"
-    legend(ax, ["G_x", "G_y"], Location="eastoutside");
+    legend(ax, ["G_y", "G_x"], Location="eastoutside");
 else
     legend(ax, Location="eastoutside");
 end
 xline(ax, sim.echoTime*msPerS, "k--", "TE", HandleVisibility="off");
-handles.now = xline(ax, tEdges(1), "g-", LineWidth=1.5, HandleVisibility="off");
+% The current time, while k-space fills. Hidden once the scan is done.
+handles.now = xline(ax, tEdges(1), "g-", "now", LineWidth=1.5, HandleVisibility="off", ...
+    LabelVerticalAlignment="bottom");
 xlim(ax, [0 tEdges(end)]);
 title(ax, "Gradients");
 subtitle(ax, "Excitation at time 0");

@@ -16,12 +16,14 @@ function result = kspaceSimulate(params, options)
 %                      defaults. Not changed.
 %   Figure           - (optional) figure to plot into. By default nothing is
 %                      plotted.
-%   ProgressInterval - (optional) with params.showProgress true and a Figure,
-%                      redraw every this many samples. Default: one EPI line.
+%   ProgressInterval - (optional) with a Figure, redraw every this many
+%                      samples while k-space fills. Default: set by
+%                      params.progressDisplay (one EPI line for "line", every
+%                      sample for "point").
 %   SaveMovie        - (optional) true to save a movie of k-space filling, as
-%                      an mp4 file in movies/. Default false. This turns on
-%                      the progress display, and makes a figure if none is
-%                      given. Saving is slower than watching, because each
+%                      an mp4 file in movies/. Default false. If
+%                      params.progressDisplay is "final", the movie shows one
+%                      frame per EPI line. Makes a figure if none is given. Saving is slower than watching, because each
 %                      frame has to be captured from the screen.
 %   Title            - (optional) name for the movie file. Default: the
 %                      sequence and field error type.
@@ -55,7 +57,7 @@ function result = kspaceSimulate(params, options)
 arguments
     params (1,1) struct = kspaceDefaultParams()
     options.Figure = []
-    options.ProgressInterval (1,1) double {mustBePositive, mustBeInteger} = 1
+    options.ProgressInterval double {mustBeScalarOrEmpty, mustBePositive, mustBeInteger} = []
     options.SaveMovie (1,1) logical = false
     options.Title (1,1) string = ""
     options.MovieFrameRate (1,1) double {mustBePositive} = 6
@@ -92,11 +94,29 @@ if options.SaveMovie && isempty(figureHandle)
     figureHandle = figure(Name="k-space demo", NumberTitle="off");
 end
 
+% How often to redraw while k-space fills. A movie of only the final image
+% would be one frame, so a movie shows at least one frame per line.
+progressDisplay = sim.progressDisplay;
+if options.SaveMovie && progressDisplay == "final"
+    progressDisplay = "line";
+end
 hasFigure    = ~isempty(figureHandle);
-showProgress = hasFigure && (sim.showProgress || options.SaveMovie);
+showProgress = hasFigure && (progressDisplay ~= "final");
 interval     = options.ProgressInterval;
-if showProgress && interval == 1
-    interval = sim.nPixels;
+if isempty(interval)
+    if progressDisplay == "point"
+        interval = 1;
+    else
+        interval = sim.nPixels;
+    end
+end
+
+% Rebuilding a spiral image takes about 0.2 s, far too long to do after
+% every sample, so the image is rebuilt at most once per turn of the
+% spiral. The spin pattern and k-space position still update every time.
+reconInterval = interval;
+if sim.sequenceType == "spiral"
+    reconInterval = max(interval, sim.nPixels);
 end
 if hasFigure && ~showProgress
     waitHandle = waitbar(0, "Simulating Fourier imaging. Please wait...");
@@ -121,16 +141,25 @@ for t = 1:nSamples
     % Measure one point in k-space
     kspace = kspaceMeasureSample(kspace, t, object, spins, sim);
 
+    if showProgress && ~isvalid(figureHandle)
+        % The figure was closed: stop drawing, and finish without plots
+        showProgress = false;
+        hasFigure    = false;
+    end
+
     if showProgress && mod(t, interval) == 0 && t < nSamples
-        [result.kspace, result.recon] = kspaceRecon(kspace, sim);
+        if mod(t, reconInterval) == 0 || isempty(result.recon)
+            [result.kspace, result.recon] = kspaceRecon(kspace, sim);
+        end
+        result.kspace.samples = kspace.samples;
         result.spins = spins;
         result.t     = t;
-        kspaceShowPlots(figureHandle, result);
+        kspaceShowPlots(figureHandle, result, DrawEveryUpdate=(progressDisplay == "point"));
         if options.SaveMovie
             frameCount = frameCount + 1;
             frames(frameCount) = getframe(figureHandle);
         end
-    elseif hasFigure && ~showProgress && mod(t, waitbarStep) == 0
+    elseif hasFigure && ~showProgress && mod(t, waitbarStep) == 0 && isvalid(waitHandle)
         waitbar(t/nSamples, waitHandle);
     end
 end
@@ -139,11 +168,14 @@ end
 result.spins = spins;
 result.t     = nSamples;
 
+hasFigure = hasFigure && isvalid(figureHandle);
 if hasFigure
     kspaceShowPlots(figureHandle, result);
 end
 
-if options.SaveMovie
+if options.SaveMovie && ~hasFigure
+    warning("kspace:movieNotSaved", "The figure was closed before the run finished, so no movie was saved.");
+elseif options.SaveMovie
     lastFrame = getframe(figureHandle);
     frames(frameCount + (1:holdFrames)) = lastFrame;
     movieName = options.Title;

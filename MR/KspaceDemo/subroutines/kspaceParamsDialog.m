@@ -26,21 +26,25 @@ imageList = ["checkerboard.jpg", "face.jpg", "sagittalBrain.jpg", "axialBrain.jp
 fieldErrorList = ["local offset", "random offset", "random lowpass", "x gradient", "y gradient", ...
     "dc offset", "map", "none"];
 
-% Each row: field name, style, label, list of options (drop-downs only)
+progressList   = ["final", "line", "point"];
+progressLabels = ["Final image only", "One line at a time", "One point at a time (slow)"];
+
+% Each row: field name, style, label, list of values (drop-downs only), and
+% the text shown for each value (if different from the value)
 items = {
-    "imageFile",       "dropdown", "Image",                                     imageList
-    "showProgress",    "checkbox", "Show recon as k-space fills (slower)",      []
-    "keepDialogOpen",  "checkbox", "Keep dialog open after each run",           []
-    "sequenceType",    "dropdown", "k-space trajectory",                        ["epi", "spiral"]
-    "fieldErrorType",  "dropdown", "B0 field error",                            fieldErrorList
-    "fieldErrorPpm",   "number",   "Field error size (ppm of B0)",              []
-    "FOV",             "number",   "Field of view (mm)",                        []
-    "pixelSize",       "number",   "Pixel size, reconstructed image (mm)",      []
-    "objectSize",      "number",   "Object size (mm)",                          []
-    "objectPixelSize", "number",   "Pixel size, object (mm)",                   []
-    "bandwidth",       "number",   "Receiver bandwidth, total (kHz)",           []
-    "echoTime",        "number",   "Echo time, TE (ms): time to k-space center", []
-    "t2star",          "number",   "T2* of tissue (ms, Inf = no decay)",        []
+    "imageFile",       "dropdown", "Image",                                     imageList, []
+    "progressDisplay", "dropdown", "Show recon as k-space fills",               progressList, progressLabels
+    "keepDialogOpen",  "checkbox", "Keep dialog open after each run",           [], []
+    "sequenceType",    "dropdown", "k-space trajectory",                        ["epi", "spiral"], []
+    "fieldErrorType",  "dropdown", "B0 field error",                            fieldErrorList, []
+    "fieldErrorPpm",   "number",   "Field error size (ppm of B0)",              [], []
+    "FOV",             "number",   "Field of view (mm)",                        [], []
+    "pixelSize",       "number",   "Pixel size, reconstructed image (mm)",      [], []
+    "objectSize",      "number",   "Object size (mm)",                          [], []
+    "objectPixelSize", "number",   "Pixel size, object (mm)",                   [], []
+    "bandwidth",       "number",   "Receiver bandwidth, total (kHz)",           [], []
+    "echoTime",        "number",   "Echo time, TE (ms): time to k-space center", [], []
+    "t2star",          "number",   "T2* of tissue (ms, Inf = no decay)",        [], []
     };
 
 % Fill in any missing fields, then keep only the items the dialog can show:
@@ -69,16 +73,21 @@ grid = uigridlayout(dialog, [nItems + 1, 2], ColumnWidth={"fit", "1x"}, ...
 
 controls = gobjects(nItems, 1);
 for ii = 1:nItems
-    [name, style, label, list] = items{ii, :};
+    [name, style, label, list, displayed] = items{ii, :};
     uilabel(grid, Text=label);
     value = params.(name);
     switch style
         case "dropdown"
             value = string(value);
-            if ~ismember(value, list)
-                list = [list value]; %#ok<AGROW> keep an unlisted choice, e.g. brain.jpg
+            if isempty(displayed)
+                displayed = list;
             end
-            controls(ii) = uidropdown(grid, Items=list, Value=value);
+            if ~ismember(value, list)
+                % Keep a choice that is not in the list, e.g. brain.jpg
+                list      = [list value]; %#ok<AGROW>
+                displayed = [displayed value]; %#ok<AGROW>
+            end
+            controls(ii) = uidropdown(grid, Items=displayed, ItemsData=list, Value=value);
         case "checkbox"
             controls(ii) = uicheckbox(grid, Text="", Value=logical(value));
         case "number"
