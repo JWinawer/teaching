@@ -91,6 +91,23 @@ See `kspaceDefaultParams` for the full list and units. A few to know about:
 Tick "Show recon as k-space fills" in the dialog, or set
 `params.showProgress = true` with a figure, to watch k-space fill.
 
+## Movies
+
+To save a movie of k-space filling, set `SaveMovie=true`:
+
+```matlab
+result = kspaceSimulate(params, SaveMovie=true, Title="EPI with a local field error");
+implay(result.movieFile);   % needs Image Processing Toolbox
+```
+
+This works with `kspaceDemo` too: `kspaceDemo(params, SaveMovie=true)` saves a
+movie of each run. The movie has one frame per progress update (one EPI line by
+default, so about 90 frames), plays at 6 frames per second (`MovieFrameRate`),
+and holds the final image for 1 s. Without a `Title`, the file is named after
+the sequence and field error type, so a later run with the same settings
+replaces it. Movies go in `movies/`, which is gitignored. Saving is slower than
+watching, because each frame has to be captured from the screen.
+
 ## Tests
 
 `tests/testKspace.m` checks the simulation against results that can be worked
@@ -112,7 +129,7 @@ runtests("tests")
   image, and `kspaceShowPlots` draws it. The top-level functions add this
   folder to the path themselves.
 - `data/`: the sample images and a measured field map.
-- `mrVistaUtilities/`: the dialog code, from mrVista.
+- `movies/`: saved movies (not committed).
 - `tests/`: see above.
 - `docs/REVIEW.md`: a review of the code from September 2026, with what was
   fixed.

@@ -4,6 +4,7 @@ function result = kspaceSimulate(params, options)
 %   result = kspaceSimulate()
 %   result = kspaceSimulate(params)
 %   result = kspaceSimulate(params, Figure=f)
+%   result = kspaceSimulate(params, SaveMovie=true, Title="EPI with a field error")
 %
 % Simulates the scanner measuring k-space one sample at a time, then
 % reconstructs the image. Use this in scripts, for example to sweep a
@@ -17,6 +18,15 @@ function result = kspaceSimulate(params, options)
 %                      plotted.
 %   ProgressInterval - (optional) with params.showProgress true and a Figure,
 %                      redraw every this many samples. Default: one EPI line.
+%   SaveMovie        - (optional) true to save a movie of k-space filling, as
+%                      an mp4 file in movies/. Default false. This turns on
+%                      the progress display, and makes a figure if none is
+%                      given. Saving is slower than watching, because each
+%                      frame has to be captured from the screen.
+%   Title            - (optional) name for the movie file. Default: the
+%                      sequence and field error type.
+%   MovieFrameRate   - (optional) playback speed of the movie, frames per
+%                      second. Default 6. The last frame is held for 1 s.
 %
 % Output, a struct with fields
 %   recon      - reconstructed image (magnitude), nPixels x nPixels
@@ -31,6 +41,7 @@ function result = kspaceSimulate(params, options)
 %                (kspace.grid)
 %   spins      - the final spin state
 %   t          - number of samples measured so far
+%   movieFile  - path of the saved movie, or "" if none was saved
 %
 % Example: how does the EPI image shift with a uniform field offset?
 %   params = kspaceDefaultParams();
@@ -45,6 +56,9 @@ arguments
     params (1,1) struct = kspaceDefaultParams()
     options.Figure = []
     options.ProgressInterval (1,1) double {mustBePositive, mustBeInteger} = 1
+    options.SaveMovie (1,1) logical = false
+    options.Title (1,1) string = ""
+    options.MovieFrameRate (1,1) double {mustBePositive} = 6
 end
 
 kspaceCheckPaths();
@@ -69,9 +83,17 @@ result.gradients  = gradients;
 result.kspace     = kspace;
 result.spins      = spins;
 result.t          = 0;
+result.movieFile  = "";
 
-hasFigure    = ~isempty(options.Figure);
-showProgress = hasFigure && sim.showProgress;
+% A movie shows k-space filling, so it needs a figure and the progress
+% display
+figureHandle = options.Figure;
+if options.SaveMovie && isempty(figureHandle)
+    figureHandle = figure(Name="k-space demo", NumberTitle="off");
+end
+
+hasFigure    = ~isempty(figureHandle);
+showProgress = hasFigure && (sim.showProgress || options.SaveMovie);
 interval     = options.ProgressInterval;
 if showProgress && interval == 1
     interval = sim.nPixels;
@@ -83,6 +105,13 @@ end
 
 nSamples = length(gradients.nDwells);
 waitbarStep = round(nSamples/10);
+
+if options.SaveMovie
+    nUpdates = floor((nSamples - 1)/interval);
+    holdFrames = ceil(options.MovieFrameRate);   % hold the last frame for 1 s
+    frames(nUpdates + holdFrames) = struct("cdata", [], "colormap", []);
+    frameCount = 0;
+end
 for t = 1:nSamples
     % Rotate (and decay) every spin by this step. The spin state is the
     % pattern the object is multiplied by to get this sample.
@@ -96,7 +125,11 @@ for t = 1:nSamples
         [result.kspace, result.recon] = kspaceRecon(kspace, sim);
         result.spins = spins;
         result.t     = t;
-        kspaceShowPlots(options.Figure, result);
+        kspaceShowPlots(figureHandle, result);
+        if options.SaveMovie
+            frameCount = frameCount + 1;
+            frames(frameCount) = getframe(figureHandle);
+        end
     elseif hasFigure && ~showProgress && mod(t, waitbarStep) == 0
         waitbar(t/nSamples, waitHandle);
     end
@@ -107,7 +140,17 @@ result.spins = spins;
 result.t     = nSamples;
 
 if hasFigure
-    kspaceShowPlots(options.Figure, result);
+    kspaceShowPlots(figureHandle, result);
+end
+
+if options.SaveMovie
+    lastFrame = getframe(figureHandle);
+    frames(frameCount + (1:holdFrames)) = lastFrame;
+    movieName = options.Title;
+    if strlength(movieName) == 0
+        movieName = "kspace " + sim.sequenceType + " " + sim.fieldErrorType;
+    end
+    result.movieFile = kspaceSaveMovie(frames, movieName, options.MovieFrameRate);
 end
 
 end

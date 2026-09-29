@@ -139,18 +139,58 @@ verifyWarning(testCase, @() kspaceDerivedParams(params), "kspace:unitsLookLikeSe
 end
 
 function testDialogRoundTrip(testCase)
-stubFolder = fullfile(fileparts(mfilename("fullpath")), "dialogStub");
-testCase.applyFixture(matlab.unittest.fixtures.PathFixture(stubFolder));
-
+% Pressing OK without changing anything returns the same settings
 params = kspaceDefaultParams();
-[returned, ok] = kspaceParamsDialog(params);
+[returned, ok] = kspaceParamsDialog(params, TestFcn=@(dialog) press(dialog, "OK"));
 verifyTrue(testCase, ok);
 verifyEqual(testCase, returned, params);
 
 % A matrix that the dialog cannot show is passed through unchanged
 params.t2star = 50*ones(180);
-returned = kspaceParamsDialog(params);
+returned = kspaceParamsDialog(params, TestFcn=@(dialog) press(dialog, "OK"));
 verifyEqual(testCase, returned.t2star, params.t2star);
+end
+
+function testDialogChangesAndCancel(testCase)
+params = kspaceDefaultParams();
+
+% Change a drop-down, a checkbox and a number, then press OK
+[returned, ok] = kspaceParamsDialog(params, TestFcn=@editAndAccept);
+verifyTrue(testCase, ok);
+verifyEqual(testCase, returned.sequenceType, "spiral");
+verifyEqual(testCase, returned.showProgress, true);
+verifyEqual(testCase, returned.echoTime, 55);
+
+% Cancel returns ok = false and the settings unchanged
+[returned, ok] = kspaceParamsDialog(params, TestFcn=@editAndCancel);
+verifyFalse(testCase, ok);
+verifyEqual(testCase, returned, params);
+end
+
+function editAndAccept(dialog)
+% Change a drop-down, a checkbox and a number, then press OK
+setControl(dialog, "sequenceType", "spiral");
+setControl(dialog, "showProgress", true);
+setControl(dialog, "echoTime", 55);
+press(dialog, "OK");
+end
+
+function editAndCancel(dialog)
+% Change a number, then press Cancel
+setControl(dialog, "echoTime", 99);
+press(dialog, "Cancel");
+end
+
+function setControl(dialog, name, value)
+% Set the dialog control for one parameter, as a user would
+control = findobj(dialog, Tag=name);
+control.Value = value;
+end
+
+function press(dialog, buttonName)
+% Press a dialog button, as a click would
+button = findobj(dialog, Tag=buttonName);
+button.ButtonPushedFcn(button, []);
 end
 
 function testPlotting(testCase)
@@ -164,4 +204,19 @@ params.showProgress = false;
 kspaceSimulate(params, Figure=f);
 handles = getappdata(f, "kspaceHandles");
 verifyTrue(testCase, isvalid(handles.recon));
+end
+
+function testSaveMovie(testCase)
+f = figure(Visible="off", Position=[0 0 800 600]);
+testCase.addTeardown(@() close(f));
+params = testCase.TestData.params;
+result = kspaceSimulate(params, Figure=f, SaveMovie=true, Title="test movie", ...
+    ProgressInterval=2000, MovieFrameRate=5);
+testCase.addTeardown(@() delete(result.movieFile));
+
+verifyTrue(testCase, isfile(result.movieFile));
+% 8100 samples, a frame every 2000 gives 4 frames, then the last frame is
+% held for 1 s (5 frames)
+reader = VideoReader(result.movieFile);
+verifyEqual(testCase, reader.NumFrames, 4 + 5);
 end

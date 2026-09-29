@@ -47,6 +47,10 @@ columns along kx, and the signal as measured. The spiral images are unchanged.
 
 `tests/testKspace.m` now holds the checks listed in the table above.
 
+The dialog is now built with MATLAB's own `uifigure` controls, inside
+`kspaceParamsDialog`, so the borrowed `mrVistaUtilities/` folder (about 590
+lines) is gone. A movie option was also added (`SaveMovie=true`).
+
 The rest of this document is the review as first written.
 
 ## Summary

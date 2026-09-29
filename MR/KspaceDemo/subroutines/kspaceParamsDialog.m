@@ -1,29 +1,38 @@
-function [params, ok] = kspaceParamsDialog(params)
+function [params, ok] = kspaceParamsDialog(params, options)
 % Show a dialog for editing the k-space demo parameters.
 %
 %   [params, ok] = kspaceParamsDialog(params)
 %
 % params is in everyday units (see kspaceDefaultParams), and so is the
-% output. ok is false if the user cancelled. Fields that the dialog cannot
-% show (an image or T2* given as a matrix) are left unchanged.
+% output. ok is false if the user cancelled or closed the dialog, in which
+% case params is returned unchanged. Fields that the dialog cannot show (an
+% image or T2* given as a matrix) are left unchanged.
+%
+% Inputs
+%   params  - starting settings (default: kspaceDefaultParams())
+%   TestFcn - (optional, for tests) a function called with the dialog
+%             figure once it is built, before waiting for the user. It can
+%             set the controls (each is tagged with its parameter name) and
+%             press "OK" or "Cancel" (tagged with those names).
 %
 % See also kspaceDemo, kspaceDefaultParams
 
 arguments
     params (1,1) struct = kspaceDefaultParams()
+    options.TestFcn = []
 end
 
 imageList = ["checkerboard.jpg", "face.jpg", "sagittalBrain.jpg", "axialBrain.jpg", "axialLucas.jpg", "other"];
 fieldErrorList = ["local offset", "random offset", "random lowpass", "x gradient", "y gradient", ...
     "dc offset", "map", "none"];
 
-% Each row: field name, style, label, list of options (popups only)
+% Each row: field name, style, label, list of options (drop-downs only)
 items = {
-    "imageFile",       "popup",    "Image",                                     imageList
+    "imageFile",       "dropdown", "Image",                                     imageList
     "showProgress",    "checkbox", "Show recon as k-space fills (slower)",      []
     "keepDialogOpen",  "checkbox", "Keep dialog open after each run",           []
-    "sequenceType",    "popup",    "k-space trajectory",                        ["epi", "spiral"]
-    "fieldErrorType",  "popup",    "B0 field error",                            fieldErrorList
+    "sequenceType",    "dropdown", "k-space trajectory",                        ["epi", "spiral"]
+    "fieldErrorType",  "dropdown", "B0 field error",                            fieldErrorList
     "fieldErrorPpm",   "number",   "Field error size (ppm of B0)",              []
     "FOV",             "number",   "Field of view (mm)",                        []
     "pixelSize",       "number",   "Pixel size, reconstructed image (mm)",      []
@@ -47,38 +56,71 @@ for ii = 1:size(items, 1)
     isShowable(ii) = isscalar(value) || ischar(value);
 end
 items = items(isShowable, :);
+nItems = size(items, 1);
 
-% generalDialog expects character vectors and cell arrays
-dlg = struct("fieldName", {}, "style", {}, "string", {}, "value", {}, "list", {});
-for ii = 1:size(items, 1)
-    value = params.(items{ii, 1});
-    if isstring(value)
-        value = char(value);
+% Build the dialog: one row per setting, then a row of buttons
+rowHeight = 26;   % pixels
+dialog = uifigure(Name="k-space demo settings", ...
+    Position=[100 100 480 rowHeight*(nItems + 1) + 40], ...
+    CloseRequestFcn=@(src, ~) finish(src, false));
+dialog.UserData = struct("isDone", false, "ok", false);
+grid = uigridlayout(dialog, [nItems + 1, 2], ColumnWidth={"fit", "1x"}, ...
+    RowHeight=repmat({rowHeight - 4}, 1, nItems + 1));
+
+controls = gobjects(nItems, 1);
+for ii = 1:nItems
+    [name, style, label, list] = items{ii, :};
+    uilabel(grid, Text=label);
+    value = params.(name);
+    switch style
+        case "dropdown"
+            value = string(value);
+            if ~ismember(value, list)
+                list = [list value]; %#ok<AGROW> keep an unlisted choice, e.g. brain.jpg
+            end
+            controls(ii) = uidropdown(grid, Items=list, Value=value);
+        case "checkbox"
+            controls(ii) = uicheckbox(grid, Text="", Value=logical(value));
+        case "number"
+            controls(ii) = uieditfield(grid, "numeric", Value=value);
+        otherwise
+            % Cannot happen: every row of items uses one of the styles above
     end
-    dlg(ii).fieldName = char(items{ii, 1});
-    dlg(ii).style     = char(items{ii, 2});
-    dlg(ii).string    = char(items{ii, 3});
-    dlg(ii).value     = value;
-    if isempty(items{ii, 4})
-        dlg(ii).list = {};
-    else
-        dlg(ii).list = cellstr(items{ii, 4});
-    end
+    controls(ii).Tag = name;
 end
 
-dialogPosition = [1 1 0.25 0.5];
-[response, ok] = generalDialog(dlg, mfilename, dialogPosition);
-if ~ok
-    return
+buttons = uigridlayout(grid, [1 2], Padding=[0 0 0 0]);
+buttons.Layout.Column = [1 2];
+uibutton(buttons, Text="OK", Tag="OK", ButtonPushedFcn=@(~, ~) finish(dialog, true));
+uibutton(buttons, Text="Cancel", Tag="Cancel", ButtonPushedFcn=@(~, ~) finish(dialog, false));
+
+% Wait for the user. A test can press a button first, in which case there
+% is nothing to wait for.
+if ~isempty(options.TestFcn)
+    options.TestFcn(dialog);
+end
+if ~dialog.UserData.isDone
+    uiwait(dialog);
 end
 
-% Copy the answers back, as strings rather than character vectors
-for ii = 1:numel(dlg)
-    value = response.(dlg(ii).fieldName);
-    if ischar(value)
-        value = string(value);
+ok = isvalid(dialog) && dialog.UserData.ok;
+if ok
+    for ii = 1:nItems
+        value = controls(ii).Value;
+        if ischar(value)
+            value = string(value);
+        end
+        params.(items{ii, 1}) = value;
     end
-    params.(dlg(ii).fieldName) = value;
+end
+if isvalid(dialog)
+    delete(dialog);
 end
 
+end
+
+function finish(dialog, ok)
+% Record which button was pressed and stop waiting
+dialog.UserData = struct("isDone", true, "ok", ok);
+uiresume(dialog);
 end

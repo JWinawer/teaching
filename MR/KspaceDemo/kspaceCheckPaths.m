@@ -1,5 +1,5 @@
 function kspaceCheckPaths()
-% Add the demo's subfolders to the MATLAB path, if they are not there yet.
+% Add the demo's subroutines folder to the MATLAB path, if it is not there yet.
 %
 %   kspaceCheckPaths()
 %
@@ -9,9 +9,6 @@ function kspaceCheckPaths()
 demoFolder = fileparts(mfilename("fullpath"));
 if ~exist("kspaceStepFactor.m", "file")
     addpath(fullfile(demoFolder, "subroutines"));
-end
-if ~exist("generalDialog.m", "file")
-    addpath(fullfile(demoFolder, "mrVistaUtilities"));
 end
 
 end
