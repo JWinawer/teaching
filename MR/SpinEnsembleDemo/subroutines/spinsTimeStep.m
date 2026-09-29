@@ -1,7 +1,7 @@
-function Spins = spinsTimeStep(Spins, params, stepnum, B_dist, offsetStep)
+function spins = spinsTimeStep(spins, params, stepIndex, boltzmann, offsetStep)
 % Advance the spin population by one time step.
 %
-%   Spins = spinsTimeStep(Spins, params, stepnum, B_dist, offsetStep)
+%   spins = spinsTimeStep(spins, params, stepIndex, boltzmann, offsetStep)
 %
 % The four things that happen to a spin in one step, in order:
 %   1. it precesses about B0, at the Larmor frequency plus its own offset
@@ -14,20 +14,22 @@ function Spins = spinsTimeStep(Spins, params, stepnum, B_dist, offsetStep)
 % already at the no-field equilibrium, spread evenly over the sphere, so
 % only step 2 can move them.
 %
-% Both animateSpins and simulateSpins call this, so the physics lives in one
+% Both spinsAnimate and spinsSimulate call this, so the physics lives in one
 % place and the two cannot drift apart.
+%
+% See also spinsPrecess, spinsApplyRF, spinsRelaxT2, spinsRelaxT1
 
-fieldIsOn = params.fieldOn(stepnum);
+fieldIsOn = params.fieldOn(stepIndex);
 
 if fieldIsOn
-    Spins = rotateB0(Spins, params, offsetStep);
+    spins = spinsPrecess(spins, params, offsetStep);
 end
 
-Spins = rotateB1(Spins, params, stepnum);
+spins = spinsApplyRF(spins, params, stepIndex);
 
 if fieldIsOn
-    Spins = relaxationTransverse(Spins, params);
-    Spins = relaxationLongitudinal(Spins, params, B_dist);
+    spins = spinsRelaxT2(spins, params);
+    spins = spinsRelaxT1(spins, params, boltzmann);
 end
 
 end

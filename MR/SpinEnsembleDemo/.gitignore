@@ -1,3 +1,4 @@
-Movies/*.mpeg
-Movies/*.mp4
-Movies/*.avi
+# Movies saved by spinsAnimate
+movies/*.mp4
+movies/*.mpeg
+movies/*.avi

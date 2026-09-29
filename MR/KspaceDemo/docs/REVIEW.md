@@ -13,14 +13,39 @@ Fixed since this review was written. Each fix was checked by a test in MATLAB.
 |---|---|---|
 | A1, A2 | Spiral weighting is now \|k\| with no post-compensation; gradient sign fixed; spiral k-space rescaled to match EPI | Spiral correlation 0.71 → 0.95 |
 | A3 | Multi-shot option removed. It had been added to improve the spiral image, and fix A1 made it unnecessary. | Tests pass without it |
-| A4 | `echoTime` is now the true TE: the readout is placed so the centre of k-space is sampled at TE. Too short a TE gives an error stating the minimum. Default TE is now 40 ms, because 30 ms is below the EPI minimum (33 ms). | Centre sampled at 40.000 ms for EPI and spiral |
-| A5 | New `t2star` parameter (scalar or map) | Centre sample shrinks by 0.4493; exp(-40/50) = 0.4493 |
+| A4 | `echoTime` is now the true TE: the readout is placed so the center of k-space is sampled at TE. Too short a TE gives an error stating the minimum. Default TE is now 40 ms, because 30 ms is below the EPI minimum (33 ms). | Center sampled at 40.000 ms for EPI and spiral |
+| A5 | New `t2star` parameter (scalar or map) | Center sample shrinks by 0.4493; exp(-40/50) = 0.4493 |
 | A6 | All labels fixed; plots rebuilt (see README) | Figures inspected |
 | Readability | New `kspaceDefaultParams` and `kspaceSimulate` (no dialog); unit conversion moved to `kspaceDerivedParams`; the dialog no longer converts values twice; loop instead of recursion; new figure instead of figures 1 and 2; help text throughout; Code Analyzer clean | Dialog round trip test |
 | Speed | EPI reconstruction places samples directly (no `griddata`). The progress display redraws once per EPI line and updates existing plots instead of adding new ones. | Progress mode: about 2 s for EPI (was an estimated 11+ minutes) |
 
 Still open: the spiral image keeps a faint circular shading near the edges,
 and the separable speed-up for spiral steps (see Speed) is not done.
+
+### Names changed later in September 2026
+
+A later cleanup made this demo match the spin demo in style, so some names in
+the review below no longer exist. Helper functions moved from
+`kspaceFunctions/` to `subroutines/`, and the images moved to `data/`.
+
+| Old name | New name |
+|---|---|
+| `noiseType`, `noiseScale` (settings) | `fieldErrorType`, `fieldErrorPpm` |
+| `imfile`, `res`, `imSize`, `imRes`, `loop` (settings) | `imageFile`, `pixelSize`, `objectSize`, `objectPixelSize`, `keepDialogOpen` |
+| `kspaceParamsGUI` | `kspaceParamsDialog` |
+| `kspaceGetImage`, `kspaceGrid` | `kspaceLoadObject`, `kspacePixelPositions` |
+| `kspaceGetB0Noise` | `kspaceFieldErrorMap` |
+| `kspaceInitializeMatrices`, `kspacePreCompute` | `kspaceInitializeData`, `kspaceInitializeSpins` |
+| `kspaceComputeOnePoint`, `kspaceGetCurrentSignal` | `kspaceStepFactor`, `kspaceMeasureSample` |
+| `kspaceGetCurrentBasisFunctions` | one line in `kspaceSimulate` |
+| `grid_kb`, `kaiser_bessel_kern` | `kspaceGridKaiserBessel` (one file) |
+
+The borrowed gridding code passed its inputs with `'`, which in MATLAB is the
+conjugate transpose. So it quietly conjugated both the data and the
+trajectory. The new version does the same mapping directly: rows along ky,
+columns along kx, and the signal as measured. The spiral images are unchanged.
+
+`tests/testKspace.m` now holds the checks listed in the table above.
 
 The rest of this document is the review as first written.
 
@@ -48,11 +73,11 @@ The rest of this document is the review as first written.
 ### A1. Spiral density weighting is wrong (main cause of the spiral artifact)
 
 `kspaceRecon.m` weights each spiral sample by `r.^0.5`, the square root of its
-distance from the k-space centre. The comment says this was copied from test
+distance from the k-space center. The comment says this was copied from test
 data and is not understood.
 
 For an Archimedean spiral traced at a constant angular rate, samples bunch up
-near the centre. The number of samples per unit area falls off as 1/|k|. So
+near the center. The number of samples per unit area falls off as 1/|k|. So
 each sample should be weighted in proportion to |k|, which evens out the
 density. (Hoge et al., 1997, compare weighting functions for spirals. I cite
 this from memory. The PubMed tool was not working during this review, so I
@@ -80,15 +105,15 @@ Measured effect (correlation with the true image):
 `ky = c*theta*cos(theta)`. The gradient is the time derivative of k. The
 derivative of `theta*cos(theta)` is `cos(theta) - theta*sin(theta)`. The code
 has a plus sign. The trajectory it actually traces is a mirror-image spiral,
-bent near the centre by up to about one-third of the ring spacing during the
+bent near the center by up to about one-third of the ring spacing during the
 first two turns. Fixing the sign improves the reconstruction a little (0.943
 to 0.952 with fix A1 in place). The same sign error is in the header comment.
 
 ### A3. Multi-shot spiral is treated as one long readout
 
-`oversample` is labelled "n shots". Each extra shot is a full spiral, so the
+`oversample` is labeled "n shots". Each extra shot is a full spiral, so the
 setting doubles the sampling density rather than splitting the spiral into
-interleaves. Also, the step that returns to the k-space centre between shots
+interleaves. Also, the step that returns to the k-space center between shots
 lasts as long as all previous shots. So field-error phase keeps building up
 from shot to shot, as if there were no new excitation. In a real multi-shot
 scan, the phase restarts at each excitation. As a result, field-error
@@ -96,16 +121,16 @@ artifacts for `oversample > 1` are wrong.
 
 ### A4. "Echo time" is the delay before the readout, not TE
 
-TE is normally defined as the time from excitation to the centre of k-space
+TE is normally defined as the time from excitation to the center of k-space
 (Bernstein, King & Zhou, *Handbook of MRI Pulse Sequences*, 2004, cited from
 memory). In the code, `echoTime` is a delay before the readout begins. For the
-default EPI, the centre of k-space is reached 33 ms after that. So a setting of
-30 ms gives a true TE of **63 ms**. For spiral, the centre is sampled first, so
+default EPI, the center of k-space is reached 33 ms after that. So a setting of
+30 ms gives a true TE of **63 ms**. For spiral, the center is sampled first, so
 there the setting is close to the true TE.
 
 This matters for teaching because students will compare dropout at different
 TEs. Either relabel the setting ("Delay before readout"), or better, place the
-readout so that the k-space centre lands at the requested TE.
+readout so that the k-space center lands at the requested TE.
 
 ### A5. No T2* decay
 
@@ -122,12 +147,12 @@ this physics, which is a natural link between the two demos.
 
 - **B0 map title:** both ends of the range use the minimum, `rg(1)`
   (`kspaceShowPlots.m:155-156`). The maximum shown is wrong.
-- **Image axes:** `imsize = [0 params.imSize*100]` converts metres to
-  centimetres, but the axes say mm (`kspaceShowPlots.m:66`). The scale is off
+- **Image axes:** `imsize = [0 params.imSize*100]` converts meters to
+  centimeters, but the axes say mm (`kspaceShowPlots.m:66`). The scale is off
   by a factor of 10.
 - **"kspace computed from image" axes:** this panel shows the FFT of the 1 mm
   original, which reaches twice as far in k-space as the acquired data, but it
-  is labelled with the axes of the acquired data. The acquired k-space is only
+  is labeled with the axes of the acquired data. The acquired k-space is only
   the central quarter of this panel. That is a useful teaching point, and at
   the moment the figure hides it.
 - **Gradient panels:** both are titled "Gradients". The y-axis is k-space steps

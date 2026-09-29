@@ -8,8 +8,8 @@ Everything under "Proposed additions" is not built yet. Everything else works
 with the code as it stands.
 
 **Update, September 2026.** Section 2 (field inhomogeneity, T2*, spin echo,
-BOLD) is now built. See `params.b0spread`, the vector `flipangle` / `fliptime` /
-`flipphase` fields, and the last three cells of
+BOLD) is now built. See `params.b0Spread`, the vector `flipAngle` / `flipTime` /
+`flipPhase` fields, and the last three cells of
 `tutorials/s_NMRWorkedExamples.m`. A first
 worked tutorial, `tutorials/tutorial1_equilibrium.m`, covers the Boltzmann
 distribution and equilibrium.
@@ -26,8 +26,8 @@ neuroscience cohort in the first week. Three options, in order of effort:
 in MATLAB Drive and share a link. Students click and run in a browser with no
 install. Highest payoff for the least work.
 
-**A Live Script with sliders.** Live Editor controls on `k`, `flipangle`, `t1`,
-`t2`, and `nspins` let students drag a control and immediately re-run the
+**A Live Script with sliders.** Live Editor controls on `k`, `flipAngle`, `t1`,
+`t2`, and `nSpins` let students drag a control and immediately re-run the
 section. The animation now runs at about 36 fps, so this feels responsive
 rather than sluggish.
 
@@ -47,8 +47,8 @@ show T2\*, the spin echo, or BOLD contrast. For an fMRI course that was the
 important gap, because **BOLD contrast is T2\***.
 
 **This is now implemented.** Each spin gets a fixed frequency offset drawn from
-a Lorentzian distribution, set by `params.b0spread` and added to the phase
-advance in `rotateB0`. The Lorentzian is what makes the decay exponential, so
+a Lorentzian distribution, set by `params.b0Spread` and added to the phase
+advance in `spinsPrecess`. The Lorentzian is what makes the decay exponential, so
 the familiar `1/T2* = 1/T2 + 1/T2'` holds, and it is reproduced to within about
 1%. One extra array buys three things:
 
@@ -118,14 +118,14 @@ before running.
 |---|---|---|
 | `k = 0` | What happens to the bulk vector? | It collapses to zero. No field, no signal. |
 | `larmor = 0` | What changed physically? | Nothing. The rotating frame is a change of viewpoint, not of physics. |
-| `flipangle = pi` | Where does M go? Is there a signal right away? | Straight to −z, no transverse component, so no signal. This is why inversion recovery needs a second pulse. |
-| `nspins = 30` | What happens to the Mz and Mxy traces? | They get visibly noisy. |
+| `flipAngle = 180` | Where does M go? Is there a signal right away? | Straight to −z, no transverse component, so no signal. This is why inversion recovery needs a second pulse. |
+| `nSpins = 30` | What happens to the Mz and Mxy traces? | They get visibly noisy. |
 
 The `larmor = 0` one is close to free and does a lot of work. The rotating
 frame is a concept students usually find slippery, and here it is literally one
 parameter.
 
-The `nspins` one is the cleanest bridge from NMR physics to the rest of the
+The `nSpins` one is the cleanest bridge from NMR physics to the rest of the
 course: it is the same reason fMRI has noise, and the same reason voxel size
 trades against SNR.
 
@@ -162,7 +162,7 @@ the way you find out is by measuring.
 
 A harder version: ask them to measure T1 and explain why the answer depends
 slightly on how the magnetization was prepared. The answer is in the comments
-in `relaxationLongitudinal.m` — exaggerating `k` makes the relaxation slightly
+in `spinsRelaxT1.m` — exaggerating `k` makes the relaxation slightly
 non-exponential.
 
 ---
@@ -178,7 +178,7 @@ non-exponential.
 5. **Two-tissue comparison.** Run two parameter sets side by side with different
    T1 values, gray versus white matter, and vary TR to show how T1-weighting
    arises. The physics is already in place; this is a wrapper and a second
-   figure panel. `simulateSpins` makes this easy.
+   figure panel. `spinsSimulate` makes this easy.
 
 ## Planned tutorial series
 

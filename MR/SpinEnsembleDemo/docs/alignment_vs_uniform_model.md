@@ -125,7 +125,7 @@ A slightly different framing from "more accurate" is stronger. The most defensib
 > uniform model lets each drawn spin obey the correct equation of motion. That is why it can show
 > pulses, precession, dephasing, echoes, and relaxation spin by spin without contradicting itself.
 
-This matches what the code does. `initializeSpins.m` spreads the spins over the sphere with a
+This matches what the code does. `spinsInitialize.m` spreads the spins over the sphere with a
 biased elevation. `spinsTimeStep.m` then moves each spin separately.
 
 ---

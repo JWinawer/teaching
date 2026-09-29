@@ -18,13 +18,6 @@ function [params, result] = kspaceDemo(params)
 %   result - the output of kspaceSimulate for the last run. It is also stored
 %            in the figure's UserData.
 %
-% Sample images ('face.jpg' and 'brain.jpg') downloaded from Google Image
-% search.
-%
-% Please feel free to improve this demo if you know how to do so. -JW
-%
-% Winawer, Vistasoft, 2009
-%
 % See also kspaceSimulate, kspaceDefaultParams
 
 arguments
@@ -40,13 +33,13 @@ f.Position = [screenSize(1:2) + 40, 0.6*screenSize(3:4)];
 result = [];
 keepGoing = true;
 while keepGoing
-    [params, ok] = kspaceParamsGUI(params);
+    [params, ok] = kspaceParamsDialog(params);
     if ~ok || ~isvalid(f)
         return
     end
     result = kspaceSimulate(params, Figure=f);
     f.UserData = result;
-    keepGoing = params.loop;
+    keepGoing = params.keepDialogOpen;
 end
 
 end

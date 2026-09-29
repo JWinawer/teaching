@@ -3,9 +3,8 @@
 %[text] By the end you should be able to say, in your own words, where the MR signal actually comes from, and why it is so small.
 %[text] Run each section in turn with **Run Section**, read the text, and answer the questions as you go. You do not need any physics background beyond the idea that a magnetic field can push on a magnet.
 %[text] ## Setup
-codeDir = fileparts(fileparts(mfilename('fullpath')));
+codeDir = fileparts(fileparts(mfilename("fullpath")));
 addpath(codeDir);
-addpath(fullfile(codeDir, 'subroutines'));
 %%
 %[text] ## 1. A proton is a tiny magnet
 %[text] Every hydrogen nucleus, which is a single proton, behaves like a very small bar magnet. It has a magnetic moment, written $\\mu$, which is a vector: it points in some direction in space.
@@ -14,16 +13,16 @@ addpath(fullfile(codeDir, 'subroutines'));
 params = spinsDefaultParams();
 params.k      = 0;      % k = 0 means no magnetic field
 params.larmor = 0;      % no field, so nothing to precess about
-params.t1     = inf;    % no relaxation, so nothing changes over time
-params.t2     = inf;
-params.nsteps = 60;
-params.fliptime = inf;  % no RF pulse
+params.t1     = Inf;    % no relaxation, so nothing changes over time
+params.t2     = Inf;
+params.nSteps = 60;
+params.flipTime = Inf;  % no RF pulse
 
 figure; %[output:69fc3fdc]
-animateSpins(params, gcf, 'No magnetic field', true);
+spinsAnimate(params, Figure=gcf, Title="No magnetic field", SaveMovie=true);
 %[text] Look at the sphere on the left. Each dot is one spin, drawn as a point on the unit sphere showing which way it points. They point in every direction, with no preference.
 %[text] Notice also that nothing moves. Precession is caused by the field, at a rate $\\omega = \\gamma B\_0$, so with no field there is nothing to precess about. Williamson says it plainly: spins "spin around their own axes, but do not precess, because there is no applied field to precess around".
-%[text] Now look at the black vector at the centre. That is the **bulk magnetization**, the vector sum of all the individual spins. It is essentially zero, because for every spin pointing one way there is another pointing the opposite way, and they cancel.
+%[text] Now look at the black vector at the center. That is the **bulk magnetization**, the vector sum of all the individual spins. It is essentially zero, because for every spin pointing one way there is another pointing the opposite way, and they cancel.
 %[text] **Question 1.** The bulk magnetization is not exactly zero. Why not? What would make it smaller?
 %%
 %[text] ## 2. Turning the field on
@@ -43,12 +42,12 @@ params.k      = 3;
 params.larmor = 10;   % the field makes them precess, too
 
 % Run for exactly one full revolution, so that a looped movie joins up
-% seamlessly. One cycle takes 1/larmor seconds, which is 1/(larmor*dt) steps.
-params.nsteps = round(1 / (params.larmor * params.dt));
+% seamlessly. One cycle takes 1000/larmor ms, which is 1000/(larmor*dt) steps.
+params.nSteps = round(1000/(params.larmor*params.dt));
 params.frameRate = 25;   % smooth enough to loop without looking choppy
 
 figure; %[output:516219c1]
-animateSpins(params, gcf, 'In a magnetic field, B0 along z', true); %[output:516219c1]
+spinsAnimate(params, Figure=gcf, Title="In a magnetic field, B0 along z", SaveMovie=true); %[output:516219c1]
 %[text] Compare this with the previous animation. The whole population is now turning about the $z$ axis, which is the precession. The spins still point in every direction, and no spin is neatly lined up with the field. But now look at the **Elevation** histogram at the bottom right: it slopes upward toward $+90^\\circ$. More spins point along the field than against it.
 %[text] That excess is the entire source of the MR signal. The green vector, the bulk magnetization along $z$, is no longer zero.
 %%
@@ -58,19 +57,22 @@ phi = linspace(-pi/2, pi/2, 200);
 
 figure; hold on
 for kk = [0 1 2 3 6]
-    B = boltzmannDistribution(kk);
-    plot(rad2deg(phi), B.pdf(phi), 'LineWidth', 2, 'DisplayName', sprintf('k = %g', kk));
+    B = spinsBoltzmannDistribution(kk);
+    plot(rad2deg(phi), B.pdf(phi), LineWidth=2, DisplayName=sprintf("k = %g", kk));
 end
-xlabel('Elevation (degrees)'); ylabel('Probability density');
-title('Distribution of spin elevations'); legend('Location','northwest');
-set(gca,'FontSize',12,'XTick',-90:45:90); box off
+xlabel("Elevation (degrees)");
+ylabel("Probability density");
+title("Distribution of spin elevations");
+legend(Location="northwest");
+set(gca, FontSize=12, XTick=-90:45:90);
+box off
 %[text] Two things are worth noticing.
 %[text] First, at `k = 0` the curve is not flat: it is a cosine, peaking at $0^\\circ$. That is not a preference for the transverse plane. It is geometry. There is simply much more *surface area* on a sphere near the equator than near the poles, so more directions have an elevation near $0^\\circ$. This is why `boltzmannDistribution` multiplies by $|\\cos\\phi|$, and it is an easy thing to get wrong.
 %[text] Second, as `k` rises the whole curve tilts toward $+90^\\circ$. Even at `k = 6`, which is a much stronger bias than anything real, the spins are still spread over the whole sphere.
 %[text] **Question 2.** At `k = 3`, what fraction of spins have a positive elevation, that is, point at all toward $B\_0$? Write down a guess before you run the next line.
-B = boltzmannDistribution(3);
+B = spinsBoltzmannDistribution(3);
 fractionUp = integral(@(x) B.pdf(x), 0, pi/2);
-fprintf('Fraction pointing toward B0 at k = 3: %.3f\n', fractionUp);
+fprintf("Fraction pointing toward B0 at k = 3: %.3f\n", fractionUp);
 %[text] If you guessed a few percent above half, you were thinking about a real magnet. At `k = 3` it is about 95%, which is nothing like a real sample. Hold on to that number: in section 5 we compute the true figure and it is almost exactly one half.
 %[text] This is the single most important caveat about these animations. They get the *mechanism* right, and they get the *magnitude* wrong on purpose, because the true magnitude cannot be drawn.
 %%
@@ -90,38 +92,38 @@ gamma = 2.675e8;      % gyromagnetic ratio of a proton, rad/s/T
 hbar  = 1.055e-34;    % reduced Planck constant, J s
 kB    = 1.381e-23;    % Boltzmann constant, J/K
 B0    = 3;            % field strength, tesla
-Temp  = 310;          % body temperature, kelvin
+temperature  = 310;          % body temperature, kelvin
 
 deltaE = gamma * hbar * B0;
-thermal = kB * Temp;
+thermal = kB * temperature;
 polarization = deltaE / (2*thermal);
 
-fprintf('Magnetic energy gap : %.3e J\n', deltaE);
-fprintf('Thermal energy      : %.3e J\n', thermal);
-fprintf('Ratio               : %.3e\n', deltaE/thermal);
-fprintf('Net polarization    : %.2e, about 1 spin in %.0f\n', ...
+fprintf("Magnetic energy gap : %.3e J\n", deltaE);
+fprintf("Thermal energy      : %.3e J\n", thermal);
+fprintf("Ratio               : %.3e\n", deltaE/thermal);
+fprintf("Net polarization    : %.2e, about 1 spin in %.0f\n", ...
     polarization, 1/polarization);
 %[text] So at 3 tesla, roughly one proton in a hundred thousand contributes to the signal. Everything else cancels out.
 %[text] That sounds hopeless until you count how many protons there are in a single voxel.
-voxel_mm3   = 3*3*3;                       % a typical fMRI voxel, cubic mm
-grams       = voxel_mm3 * 1e-3;            % water is about 1 g per cubic cm
+voxelVolume   = 3*3*3;                       % a typical fMRI voxel, cubic mm
+grams       = voxelVolume * 1e-3;            % water is about 1 g per cubic cm
 molesWater  = grams / 18;
 protons     = molesWater * 6.022e23 * 2;   % 2 hydrogens per water molecule
 netSpins    = protons * polarization;
 
-fprintf('\nProtons in a %g mm^3 voxel : %.2e\n', voxel_mm3, protons);
-fprintf('Net contributing spins      : %.2e\n', netSpins);
+fprintf("\nProtons in a %g mm^3 voxel : %.2e\n", voxelVolume, protons);
+fprintf("Net contributing spins      : %.2e\n", netSpins);
 %[text] A vanishingly small fraction of an enormous number is still an enormous number. That is why MR works at all.
 %[text] Now we can put a number on the exaggeration. For small `k` the magnetization per spin is close to $k/3$, so the value of `k` that would match a real 3 tesla magnet is:
 kRealistic = 3 * polarization;
-fprintf('Realistic k at 3 T   : %.2e\n', kRealistic);
-fprintf('k used in the animations : %g\n', 3);
-fprintf('Exaggeration factor      : %.0e\n', 3/kRealistic);
+fprintf("Realistic k at 3 T   : %.2e\n", kRealistic);
+fprintf("k used in the animations : %g\n", 3);
+fprintf("Exaggeration factor      : %.0e\n", 3/kRealistic);
 
-Breal = boltzmannDistribution(kRealistic);
-fprintf('\nFraction pointing toward B0, realistic k : %.8f\n', ...
+Breal = spinsBoltzmannDistribution(kRealistic);
+fprintf("\nFraction pointing toward B0, realistic k : %.8f\n", ...
     integral(@(x) Breal.pdf(x), 0, pi/2));
-fprintf('Fraction pointing toward B0, k = 3       : %.8f\n', fractionUp);
+fprintf("Fraction pointing toward B0, k = 3       : %.8f\n", fractionUp);
 %[text] So the honest picture is a sphere of spins pointing in every direction, with an excess of about seven spins in a million on the $+z$ side. Drawing that would take about a million dots before the bias was visible at all.
 %[text] That is why we raise `k`. The animation is a cartoon in this one specific respect, and in no other: the dynamics, the relaxation, and the response to pulses are all simulated properly.
 %[text] **Question 4.** The simulation uses `params.nspins = 3000`. With a realistic polarization, the net magnetization of $N$ spins grows like $N \\times 10^{-5}$, while the random cancellation left over grows like $\\sqrt{N}$. Roughly how large would $N$ have to be for the signal to exceed that noise? Compare your answer with the number of protons in a voxel.
@@ -131,20 +133,20 @@ fprintf('Fraction pointing toward B0, k = 3       : %.8f\n', fractionUp);
 %[text] We can see this by starting the system away from equilibrium and watching it return. Here we tip the magnetization into the transverse plane with a $90^\\circ$ pulse and then watch $M\_z$ recover. The time constant of that recovery is $T\_1$.
 params = spinsDefaultParams();
 params.larmor   = 0;        % rotating frame, so precession is hidden
-params.t1       = 0.8;
-params.t2       = 0.05;
-params.dt       = 1e-3;
-params.nsteps   = 400;
-params.fliptime = 0.01;
+params.t1       = 800;      % ms
+params.t2       = 50;       % ms
+params.dt       = 1;        % ms
+params.nSteps   = 400;
+params.flipTime = 10;       % ms
 
 figure;
-animateSpins(params, gcf, 'Return to equilibrium after a 90 degree pulse');
+spinsAnimate(params, Figure=gcf, Title="Return to equilibrium after a 90 degree pulse");
 %[text] Watch the elevation histogram. Right after the pulse it is symmetric, with no excess along $z$. Over the next few hundred milliseconds the tilt reappears, and the green $M\_z$ trace climbs back up.
 %[text] The equilibrium value it climbs back to is set entirely by `k`. In fact it has a closed form, the Langevin function:
 %[text] $M\_z / M\_0 = \\coth(k) - 1/k$
 for kk = [1 2 3 6]
-    B = boltzmannDistribution(kk);
-    fprintf('k = %g : equilibrium Mz per spin = %.4f\n', kk, B.Mz);
+    B = spinsBoltzmannDistribution(kk);
+    fprintf("k = %g : equilibrium Mz per spin = %.4f\n", kk, B.Mz);
 end
 %[text] **Question 5.** If you doubled `k`, would the bulk magnetization double? Check your answer against the numbers just printed, and explain the discrepancy.
 %%
