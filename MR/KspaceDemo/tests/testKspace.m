@@ -264,3 +264,18 @@ verifyEqual(testCase, result.t, numel(result.gradients.nDwells));
 verifyGreaterThan(testCase, corr(result.recon(:), ...
     reshape(imresize(result.object.image, [90 90]), [], 1)), 0.98);
 end
+
+function testDialogFitsItsContents(testCase)
+% The window is tall enough to show every row, including the buttons
+kspaceParamsDialog(kspaceDefaultParams(), TestFcn=@(dialog) checkDialogHeight(testCase, dialog));
+end
+
+function checkDialogHeight(testCase, dialog)
+% Compare the window height with the space its rows need, then press OK
+drawnow
+grid   = dialog.Children(1);
+nRows  = numel(grid.RowHeight);
+needed = sum([grid.RowHeight{:}]) + (nRows - 1)*grid.RowSpacing + grid.Padding(2) + grid.Padding(4);
+verifyGreaterThanOrEqual(testCase, dialog.Position(4), needed);
+press(dialog, "OK");
+end

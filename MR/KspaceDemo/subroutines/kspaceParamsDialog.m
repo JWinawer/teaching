@@ -63,13 +63,27 @@ items = items(isShowable, :);
 nItems = size(items, 1);
 
 % Build the dialog: one row per setting, then a row of buttons
-rowHeight = 26;   % pixels
+% Size the window to fit every row: the rows themselves, the spacing
+% between them, and the padding around the edge. If the screen is too short,
+% the window is capped at the screen height and the rows scroll.
+nRows       = nItems + 1;
+rowHeight   = 22;   % pixels
+rowSpacing  = 8;
+padding     = 12;
+dialogWidth = 480;
+dialogHeight = nRows*rowHeight + (nRows - 1)*rowSpacing + 2*padding;
+screenSize   = get(groot, "ScreenSize");
+dialogHeight = min(dialogHeight, screenSize(4) - 100);
+dialogLeft   = screenSize(1) + (screenSize(3) - dialogWidth)/2;
+dialogBottom = screenSize(2) + (screenSize(4) - dialogHeight)/2;
+
 dialog = uifigure(Name="k-space demo settings", ...
-    Position=[100 100 480 rowHeight*(nItems + 1) + 40], ...
+    Position=[dialogLeft dialogBottom dialogWidth dialogHeight], ...
     CloseRequestFcn=@(src, ~) finish(src, false));
 dialog.UserData = struct("isDone", false, "ok", false);
-grid = uigridlayout(dialog, [nItems + 1, 2], ColumnWidth={"fit", "1x"}, ...
-    RowHeight=repmat({rowHeight - 4}, 1, nItems + 1));
+grid = uigridlayout(dialog, [nRows, 2], ColumnWidth={"fit", "1x"}, ...
+    RowHeight=repmat({rowHeight}, 1, nRows), RowSpacing=rowSpacing, ...
+    Padding=padding*[1 1 1 1], Scrollable="on");
 
 controls = gobjects(nItems, 1);
 for ii = 1:nItems
