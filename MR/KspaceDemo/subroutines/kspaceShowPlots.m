@@ -184,9 +184,14 @@ xline(ax, sim.echoTime*msPerS, "k--", "TE", HandleVisibility="off");
 % The current time, while k-space fills. Hidden once the scan is done.
 handles.now = xline(ax, tEdges(1), "g-", "now", LineWidth=1.5, HandleVisibility="off", ...
     LabelVerticalAlignment="bottom");
-xlim(ax, [0 tEdges(end)]);
+% Show only the readout, plus a small margin on each side. TE is included so
+% that its marker is never cut off.
+paddingFraction = 0.05;
+tRange   = [min(tEdges(1), sim.echoTime*msPerS) max(tEdges(end), sim.echoTime*msPerS)];
+tPadding = paddingFraction*diff(tRange);
+xlim(ax, tRange + [-tPadding tPadding]);
 title(ax, "Gradients");
-subtitle(ax, "Excitation at time 0");
+subtitle(ax, "Time since excitation");
 xlabel(ax, "time (ms)");
 ylabel(ax, "gradient (mT/m)");
 
