@@ -102,13 +102,16 @@ plain-text MATLAB Live Script: open it in MATLAB and it renders as a document.
   distribution, and why the real effect is a hundred thousand times smaller
   than the animations show.
 
-It also holds two ordinary scripts:
+It also holds three ordinary scripts:
 
 - `s_NMRWorkedExamples.m`: worked cells for precession, pulses, T1, T2, T2*,
   the spin echo and BOLD. Run one cell at a time.
 - `s_makeRelaxationFigures.m`: short runs of `spinsSimulate` with no
   animation. It makes Figures 6-8 of `docs/nmr_relaxation_summary.md` and
   prints the numbers quoted in their captions.
+- `s_makeSchematicFigures.m`: draws the schematic Figures 1-5 of
+  `docs/nmr_relaxation_summary.md` (spin models, spinning top, gas diffusion,
+  detailed balance, T1 recovery shape).
 
 ## Tests
 
@@ -128,7 +131,8 @@ runtests("tests")
   students running, lecture ideas, exercises, and planned tutorials.
 - `nmr_relaxation_summary.md`: why spins relax: which parts of NMR the
   classical vector picture gets right (precession, pulses, equilibrium
-  magnetization), and why T1 relaxation needs quantum mechanics. Built from
+  magnetization), what makes T1 relaxation run toward alignment, and where
+  quantum mechanics is really needed (the exact rates). Built from
   Williamson (2019) and Hanson (2008), with figures from this code.
 - `alignment_vs_uniform_model.md`: how the common "spins are either up or
   down" picture relates to the uniform model used here, and whether an

@@ -47,7 +47,7 @@ A large sample of non-interacting spin-½ nuclei is described by one object, the
 matrix**. It holds everything you could ever measure about the group. For spin-½ it has a very
 simple form:
 
-$$\rho = \tfrac{1}{2}\left(I + \mathbf{P}\cdot\boldsymbol{\sigma}\right)$$
+$\rho = \tfrac{1}{2}\left(I + \mathbf{P}\cdot\boldsymbol{\sigma}\right)$
 
 Here **P** is just the **average** Bloch vector of the group. Nothing else about the group enters.
 At thermal equilibrium, **P** points along B₀ and is tiny: about 10⁻⁵ at 2.35 T and 300 K.
@@ -59,8 +59,9 @@ examples:
 - **Callaghan's picture:** 50.0004% of spins exactly up, 49.9996% exactly down.
 - **Hanson and Williamson's picture:** spins point every which way, with a very slight lean toward
   +z.
-- **A strange third picture:** 50.0004% along +x and 49.9996% along −x, then rotated. Or any other
-  split you like.
+- **A strange third picture:** equal numbers of spins along +x, −x, +y, and −y, plus a tiny extra
+  fraction (about 10⁻⁵) pointing along +z. No spin sits up or down, and only a handful point along
+  z at all, yet the average is the same **P**. Or any other split you like.
 
 Physicists know this result well. The same mixed state can be built from pure states in many ways,
 and no measurement on the group can tell those ways apart. So the diagram with 5 spins up and 4
@@ -90,11 +91,15 @@ For a sample sitting still at equilibrium, the two pictures cannot be told apart
 once you apply a pulse, let spins precess, or watch them relax. Each picture then implies
 something about how **individual** spins move.
 
-- **The uniform model is correct for single spins, not just for the group.** Feynman, Vernon, and
-  Hellwarth showed that a spin-½ state's Bloch vector moves exactly like a classical magnetic
-  dipole. So every arrow in the animation can follow the Bloch equations by itself. Precession, RF
-  rotation, dephasing, and echoes all work spin by spin. Adding up the arrows gives the right bulk
-  result at every moment.
+- **The uniform model's arrows move correctly one by one, not just as a group.** Feynman, Vernon,
+  and Hellwarth showed that a spin-½ state's Bloch vector moves exactly like a classical magnetic
+  dipole. (Section 2 says no split is the one true picture. The point here is narrower: once you
+  pick the uniform split, each of its arrows can obey the correct equation of motion.) So
+  precession, RF rotation, dephasing, and echoes all work spin by spin. Relaxation is different.
+  A single pure-state arrow always has the same length, so it cannot shrink the way the Bloch T₁
+  and T₂ terms describe. In the demo, relaxation is a random walk of each arrow, built so that the
+  **average** follows the Bloch equations. Adding up the arrows gives the right bulk result at
+  every moment.
 - **The up/down picture breaks as soon as anything happens.** After a 90° pulse, a spin that
   started "up" is along x. That is an equal mix of up and down, and the picture has no way to draw
   it. Textbooks then add fixes that are actually wrong:
@@ -122,45 +127,18 @@ The confusion comes when a beginner takes it literally.
 A slightly different framing from "more accurate" is stronger. The most defensible claim is this:
 
 > The uniform model and the up/down model predict the same equilibrium magnetization. But only the
-> uniform model lets each drawn spin obey the correct equation of motion. That is why it can show
-> pulses, precession, dephasing, echoes, and relaxation spin by spin without contradicting itself.
+> uniform model lets each drawn spin obey the correct equation of motion during pulses,
+> precession, dephasing, and echoes. Relaxation can then be added as small random steps of each
+> spin whose average matches the Bloch equations. That is why it can show all of these spin by
+> spin without contradicting itself.
 
 This matches what the code does. `spinsInitialize.m` spreads the spins over the sphere with a
-biased elevation. `spinsTimeStep.m` then moves each spin separately.
+biased elevation. `spinsTimeStep.m` then moves each spin separately, and `spinsRelaxT1.m` and
+`spinsRelaxT2.m` add the random relaxation steps.
 
 ---
 
-## Question 2: Is there a way to get the transcript of the Callaghan video?
-
-### Answer
-
-Yes. There are two easy ways.
-
-**Option 1: in the browser (no install).** Open the video on youtube.com. Under the video, click
-**...more** to expand the description, scroll down, and click **Show transcript**. A panel opens
-with the text and timestamps. You can turn the timestamps off from the ⋮ menu, then copy the text.
-The captions for this video are auto-generated, so expect some errors with physics terms.
-
-**Option 2: download the caption file with `yt-dlp`.** This free command-line tool can save just
-the captions, without the video.
-
-```bash
-brew install yt-dlp
-```
-
-```bash
-yt-dlp --skip-download --write-subs --write-auto-subs --sub-langs "en.*" --sub-format vtt -o "$HOME/Documents/callaghan_nmr.%(ext)s" "https://www.youtube.com/watch?v=jUKdVBpCLHM"
-```
-
-This saves a `.vtt` caption file. It is plain text, but full of timestamps, and auto-captions
-repeat each line several times. A short Python script turned it into clean text, grouped into
-30-second paragraphs. The result is in `~/Documents/callaghan_nmr_transcript.txt` (not in this
-repository). The captions contain errors such as "lour" for "Larmor" and "procession" for
-"precession."
-
----
-
-## Question 3: What does Callaghan actually say about up and down?
+## Question 2: What does Callaghan actually say about up and down?
 
 *(Follow-up after reading the transcript.)*
 
@@ -196,8 +174,8 @@ His claim has a precise, correct version and a literal version that goes further
 The "spin excess" story is the same kind of choice. In the up/down picture, most spins cancel in
 pairs, and only the excess does anything visible. In the uniform model, which SpinEnsembleDemo
 uses, every spin contributes a little, and the small net lean produces the magnetization. Both give
-the same bulk vector. But only the uniform model lets each drawn spin follow the Bloch equation on
-its own through pulses and relaxation.
+the same bulk vector. But only the uniform model lets each drawn spin follow the correct equation of
+motion on its own through pulses and precession, with relaxation added as small random steps.
 
 So Callaghan is not making an error you could catch in an experiment. He is presenting one valid
 bookkeeping as if it were the literal state of each nucleus. That is the habit Hanson and
@@ -243,14 +221,14 @@ rotating further.
 
 #### What the up/down view really does well
 
-| Strength | Do you need nuclei drawn as up or down? |
-|---|---|
-| **Two energy levels, ΔE = γħB₀.** Links the Larmor frequency to energy and to the Boltzmann factor. | No. You can draw two energy levels as a statement about **energies**, without drawing spins pointing up or down. |
-| **Size of the signal.** "About 1 in 100,000 extra spins" gives a feel for why MRI is weak, and why a higher field or lower temperature helps. | No. "The cloud leans toward +z by about 1 part in 100,000" says the same thing. |
-| **The exact formula for M₀.** The spin-½ result (Curie's law) falls out of a two-level sum. | Partly. The uniform model gets the same answer, but only if you use the full spin magnitude, √(I(I+1)). Using ½ gives an answer off by a factor of 3. An intro text can simply state the formula. |
-| **Inversion and "negative spin temperature."** | No. After a 180° pulse, the cloud leans toward −z and relaxes back. |
+| Strength                                                                                                                                                                   | Do you need nuclei drawn as up or down?                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Two energy levels, ΔE = γħB₀.** Links the Larmor frequency to energy and to the Boltzmann factor.                                                                        | No. You can draw two energy levels as a statement about **energies**, without drawing spins pointing up or down.                                                                                                 |
+| **Size of the signal.** "About 1 in 100,000 extra spins" gives a feel for why MRI is weak, and why a higher field or lower temperature helps.                              | No. "The cloud leans toward +z by about 1 part in 100,000" says the same thing.                                                                                                                                  |
+| **The exact formula for M₀.** The spin-½ result (Curie's law) falls out of a two-level sum.                                                                                | Partly. The uniform model gets the same answer, but only if you use the full spin magnitude, √(I(I+1)). Using ½ gives an answer off by a factor of 3. An intro text can simply state the formula.                |
+| **Inversion and "negative spin temperature."**                                                                                                                             | No. After a 180° pulse, the cloud leans toward −z and relaxes back.                                                                                                                                              |
 | **Relaxation theory** (transition rates W₀, W₁, W₂, spectral density at ω₀ and 2ω₀, NOE, magnetization transfer) is written in terms of transitions between energy levels. | This is the strongest case. But it is advanced material, beyond most intro MRI courses. At an intro level, "fluctuating fields near the Larmor frequency cause T₁ relaxation" works fine with the uniform model. |
-| **Spectroscopy** (J-coupling multiplets, hyperpolarization, DNP). Energy-level diagrams are the standard tool. | Yes, energy levels are needed. But coupled spins can't be drawn as single vectors in **any** of the three models. This is MRS or NMR chemistry, not intro MRI. |
+| **Spectroscopy** (J-coupling multiplets, hyperpolarization, DNP). Energy-level diagrams are the standard tool.                                                             | Yes, energy levels are needed. But coupled spins can't be drawn as single vectors in **any** of the three models. This is MRS or NMR chemistry, not intro MRI.                                                   |
 
 So what really helps is the **energy-level diagram** and **population counting**. Neither one needs
 a picture of each nucleus pointing exactly up or down.
